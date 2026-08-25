@@ -198,8 +198,7 @@ MPTokenIssuanceSet::checkPermission(ReadView const& view, STTx const& tx)
     // issuance mutations require transaction-level MPTokenIssuanceSet.
     if (tx.isFieldPresent(sfDomainID) || tx.isFieldPresent(sfMPTokenMetadata) ||
         tx.isFieldPresent(sfTransferFee) || tx.isFieldPresent(sfMutableFlags) ||
-        tx.isFieldPresent(sfIssuerEncryptionKey) ||
-        tx.isFieldPresent(sfAuditorEncryptionKey))
+        tx.isFieldPresent(sfIssuerEncryptionKey) || tx.isFieldPresent(sfAuditorEncryptionKey))
         return terNO_DELEGATE_PERMISSION;
 
     // this is added in case more flags will be added for MPTokenIssuanceSet

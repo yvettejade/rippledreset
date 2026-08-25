@@ -1412,8 +1412,7 @@ class ConfidentialMPT_test : public beast::unit_test::Suite
         auto const aliceKey = makeKey();
         auto const id = mpt.issuanceID();
         auto rawKey = [](CompressedPoint const& key) {
-            return std::string(
-                reinterpret_cast<char const*>(key.data()), key.size());
+            return std::string(reinterpret_cast<char const*>(key.data()), key.size());
         };
 
         env.fund(XRP(1000), lockDelegate);
@@ -1454,8 +1453,9 @@ class ConfidentialMPT_test : public beast::unit_test::Suite
                 Slice(id.data(), id.size()),
                 env.seq(alice));
             confidential::SchnorrRegisterProof proof{};
-            BEAST_EXPECT(confidential::proveSchnorrRegister(
-                aliceKey.sk, aliceKey.pk, Slice(context.data(), context.size()), proof));
+            BEAST_EXPECT(
+                confidential::proveSchnorrRegister(
+                    aliceKey.sk, aliceKey.pk, Slice(context.data(), context.size()), proof));
             jv[sfZKProof] = hexOf(proof);
             env(jv, Fee(XRP(1)));
             BEAST_EXPECT(env.ter() == tesSUCCESS);
@@ -1474,8 +1474,7 @@ class ConfidentialMPT_test : public beast::unit_test::Suite
             auto const issuance = env.le(keylet::mptIssuance(id));
             BEAST_EXPECT(!issuance->isFieldPresent(sfPendingAuditorEncryptionKey));
             BEAST_EXPECT(
-                (*issuance)[sfAuditorEncryptionKey] ==
-                Slice(auditor.pk.data(), auditor.pk.size()));
+                (*issuance)[sfAuditorEncryptionKey] == Slice(auditor.pk.data(), auditor.pk.size()));
         }
 
         {
