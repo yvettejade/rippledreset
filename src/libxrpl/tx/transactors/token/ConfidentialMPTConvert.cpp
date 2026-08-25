@@ -139,9 +139,7 @@ ConfidentialMPTConvert::doApply()
             Slice(issuanceID.data(), issuanceID.size()),
             ctx_.tx.getSeqValue());
         if (!confidential::verifySchnorrRegister(
-                holderPk,
-                Slice(ctxId.data(), ctxId.size()),
-                ctx_.tx[sfZKProof]))
+                holderPk, Slice(ctxId.data(), ctxId.size()), ctx_.tx[sfZKProof]))
             return tecBAD_PROOF;
     }
     else if (!parseKey((*sleMpt)[sfHolderEncryptionKey], holderPk))
@@ -197,9 +195,7 @@ ConfidentialMPTConvert::doApply()
             return tecINTERNAL;
         (*sleIssuance)[sfConfidentialHolderCount] = holderCount + 1;
 
-        sleMpt->setFieldVL(
-            sfHolderEncryptionKey,
-            Slice(holderPk.data(), holderPk.size()));
+        sleMpt->setFieldVL(sfHolderEncryptionKey, Slice(holderPk.data(), holderPk.size()));
         confidential::Ciphertext zeroSpend{};
         if (auto const ter = encZeroFor(view(), *sleIssuance, account, holderPk, zeroSpend);
             !isTesSuccess(ter))
@@ -222,9 +218,7 @@ ConfidentialMPTConvert::doApply()
                 return ter;
             confidential::serializeCiphertext(zeroA, Slice(raw.data(), raw.size()));
             sleMpt->setFieldVL(sfAuditorEncryptedBalance, Slice(raw.data(), raw.size()));
-            sleMpt->setFieldU32(
-                sfAuditorKeyVersion,
-                (*sleIssuance)[sfAuditorKeyVersion]);
+            sleMpt->setFieldU32(sfAuditorKeyVersion, (*sleIssuance)[sfAuditorKeyVersion]);
         }
         sleMpt->setFieldU32(sfConfidentialBalanceVersion, 0);
     }

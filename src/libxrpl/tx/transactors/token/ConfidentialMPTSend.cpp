@@ -196,8 +196,7 @@ ConfidentialMPTSend::doApply()
         return tecBAD_PROOF;
 
     confidential::Ciphertext spending{};
-    if (auto const ter =
-            parseCiphertextField((*sleSrc)[sfConfidentialBalanceSpending], spending);
+    if (auto const ter = parseCiphertextField((*sleSrc)[sfConfidentialBalanceSpending], spending);
         !isTesSuccess(ter))
         return ter;
     pub.balanceC1 = spending.c1;
@@ -216,7 +215,9 @@ ConfidentialMPTSend::doApply()
     if (zk.length() != confidential::kSendZkProofBytes)
         return tecBAD_PROOF;
     if (!confidential::verifySendSigma(
-            pub, Slice(ctxId.data(), ctxId.size()), Slice(zk.data(), confidential::kSendSigmaProofBytes)))
+            pub,
+            Slice(ctxId.data(), ctxId.size()),
+            Slice(zk.data(), confidential::kSendSigmaProofBytes)))
         return tecBAD_PROOF;
 
     confidential::CompressedPoint remaining{};

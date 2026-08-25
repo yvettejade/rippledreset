@@ -11,9 +11,7 @@
 namespace xrpl {
 
 XRPAmount
-ConfidentialMPTReencryptAuditor::calculateBaseFee(
-    ReadView const& view,
-    STTx const& tx)
+ConfidentialMPTReencryptAuditor::calculateBaseFee(ReadView const& view, STTx const& tx)
 {
     return confidentialMptBaseFee(view, tx);
 }
@@ -23,12 +21,9 @@ ConfidentialMPTReencryptAuditor::preflight(PreflightContext const& ctx)
 {
     if (ctx.tx[sfAccount] == ctx.tx[sfHolder])
         return temMALFORMED;
-    if (auto const ter =
-            preflightCiphertext(ctx.tx[sfAuditorEncryptedBalance]);
-        !isTesSuccess(ter))
+    if (auto const ter = preflightCiphertext(ctx.tx[sfAuditorEncryptedBalance]); !isTesSuccess(ter))
         return ter;
-    if (ctx.tx[sfZKProof].length() !=
-        confidential::kAuditorEqualitySigmaProofBytes)
+    if (ctx.tx[sfZKProof].length() != confidential::kAuditorEqualitySigmaProofBytes)
         return temMALFORMED;
     return tesSUCCESS;
 }
@@ -81,20 +76,19 @@ ConfidentialMPTReencryptAuditor::doApply()
 
     confidential::CompressedPoint issuerKey{};
     confidential::CompressedPoint auditorKey{};
-    if (!confidential::parseCompressedPoint(
-            (*sleIssuance)[sfIssuerEncryptionKey], issuerKey) ||
+    if (!confidential::parseCompressedPoint((*sleIssuance)[sfIssuerEncryptionKey], issuerKey) ||
         !confidential::parseCompressedPoint(
             (*sleIssuance)[sfPendingAuditorEncryptionKey], auditorKey))
         return tecBAD_PROOF;
 
     confidential::Ciphertext issuerCiphertext{};
     confidential::Ciphertext auditorCiphertext{};
-    if (auto const ter = parseCiphertextField(
-            (*sleMpt)[sfIssuerEncryptedBalance], issuerCiphertext);
+    if (auto const ter =
+            parseCiphertextField((*sleMpt)[sfIssuerEncryptedBalance], issuerCiphertext);
         !isTesSuccess(ter))
         return ter;
-    if (auto const ter = parseCiphertextField(
-            ctx_.tx[sfAuditorEncryptedBalance], auditorCiphertext);
+    if (auto const ter =
+            parseCiphertextField(ctx_.tx[sfAuditorEncryptedBalance], auditorCiphertext);
         !isTesSuccess(ter))
         return ter;
 
@@ -108,16 +102,12 @@ ConfidentialMPTReencryptAuditor::doApply()
         targetVersion);
 
     confidential::AuditorEqualitySigmaPublicInput pub{
-        issuerKey,
-        issuerCiphertext,
-        auditorKey,
-        auditorCiphertext};
+        issuerKey, issuerCiphertext, auditorKey, auditorCiphertext};
     if (!confidential::verifyAuditorEqualitySigma(
             pub, Slice(context.data(), context.size()), ctx_.tx[sfZKProof]))
         return tecBAD_PROOF;
 
-    setCiphertextField(
-        *sleMpt, sfAuditorEncryptedBalance, auditorCiphertext);
+    setCiphertextField(*sleMpt, sfAuditorEncryptedBalance, auditorCiphertext);
     (*sleMpt)[sfAuditorKeyVersion] = targetVersion;
 
     auto const remaining = (*sleIssuance)[sfAuditorMigrationCount];

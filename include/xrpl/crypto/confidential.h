@@ -24,8 +24,7 @@ inline constexpr std::size_t kClawbackSigmaProofBytes = 64;
 // Bulletproofs (Bünz et al., 2017/1066) for n=64: 2 log2(nm)+4 points + 5 scalars.
 inline constexpr std::size_t kSingleBulletproofBytes = 688;      // m=1: 16*33 + 5*32
 inline constexpr std::size_t kAggregatedBulletproofBytes = 754;  // m=2: 18*33 + 5*32
-inline constexpr std::size_t kSendZkProofBytes =
-    kSendSigmaProofBytes + kAggregatedBulletproofBytes;
+inline constexpr std::size_t kSendZkProofBytes = kSendSigmaProofBytes + kAggregatedBulletproofBytes;
 inline constexpr std::size_t kConvertBackZkProofBytes =
     kConvertBackSigmaProofBytes + kSingleBulletproofBytes;
 
@@ -35,16 +34,14 @@ using CiphertextBytes = std::array<std::uint8_t, kCiphertextBytes>;
 using SchnorrRegisterProof = std::array<std::uint8_t, kSchnorrRegisterProofBytes>;
 using SendSigmaProof = std::array<std::uint8_t, kSendSigmaProofBytes>;
 using ConvertBackSigmaProof = std::array<std::uint8_t, kConvertBackSigmaProofBytes>;
-using AuditorEqualitySigmaProof =
-    std::array<std::uint8_t, kAuditorEqualitySigmaProofBytes>;
+using AuditorEqualitySigmaProof = std::array<std::uint8_t, kAuditorEqualitySigmaProofBytes>;
 using ClawbackSigmaProof = std::array<std::uint8_t, kClawbackSigmaProofBytes>;
 
 /** Fiat–Shamir domain tags from Updated_ConfidentialMPT_20260612.md. */
 inline constexpr std::string_view kTagSchnorrRegister = "CMPT_POK_SK_REGISTER";
 inline constexpr std::string_view kTagSendSigma = "CMPT_SEND_SIGMA";
 inline constexpr std::string_view kTagConvertBackSigma = "CMPT_CONVERTBACK_SIGMA";
-inline constexpr std::string_view kTagAuditorEqualitySigma =
-    "CMPT_AUDITOR_EQ_SIGMA";
+inline constexpr std::string_view kTagAuditorEqualitySigma = "CMPT_AUDITOR_EQ_SIGMA";
 inline constexpr std::string_view kTagClawbackSigma = "CMPT_CLAWBACK_SIGMA";
 inline constexpr std::string_view kTagEncZero = "EncZero";
 
@@ -86,31 +83,19 @@ pointMulBase(Scalar const& k, CompressedPoint& out) noexcept;
 
 /** R = P + Q via secp256k1_ec_pubkey_combine. */
 [[nodiscard]] bool
-pointAdd(
-    CompressedPoint const& p,
-    CompressedPoint const& q,
-    CompressedPoint& out) noexcept;
+pointAdd(CompressedPoint const& p, CompressedPoint const& q, CompressedPoint& out) noexcept;
 
 /** R = P - Q via negate + combine. */
 [[nodiscard]] bool
-pointSub(
-    CompressedPoint const& p,
-    CompressedPoint const& q,
-    CompressedPoint& out) noexcept;
+pointSub(CompressedPoint const& p, CompressedPoint const& q, CompressedPoint& out) noexcept;
 
 /** R = k·P via secp256k1_ec_pubkey_tweak_mul. */
 [[nodiscard]] bool
-pointMul(
-    CompressedPoint const& p,
-    Scalar const& k,
-    CompressedPoint& out) noexcept;
+pointMul(CompressedPoint const& p, Scalar const& k, CompressedPoint& out) noexcept;
 
 /** R = P + k·G via secp256k1_ec_pubkey_tweak_add. */
 [[nodiscard]] bool
-pointAddMulBase(
-    CompressedPoint const& p,
-    Scalar const& k,
-    CompressedPoint& out) noexcept;
+pointAddMulBase(CompressedPoint const& p, Scalar const& k, CompressedPoint& out) noexcept;
 
 [[nodiscard]] bool
 parseCiphertext(Slice in, Ciphertext& out) noexcept;
@@ -174,16 +159,10 @@ pedersenNumsGenerator() noexcept;
 
 /** PC = m·G + r·H (r reused as ElGamal randomness for amount linkage). */
 [[nodiscard]] bool
-pedersenCommit(
-    std::uint64_t amount,
-    Scalar const& blinding,
-    CompressedPoint& out) noexcept;
+pedersenCommit(std::uint64_t amount, Scalar const& blinding, CompressedPoint& out) noexcept;
 
 [[nodiscard]] bool
-pedersenCommitScalar(
-    Scalar const& amount,
-    Scalar const& blinding,
-    CompressedPoint& out) noexcept;
+pedersenCommitScalar(Scalar const& amount, Scalar const& blinding, CompressedPoint& out) noexcept;
 
 /**
  * TransactionContextID = SHA512Half(preimage).
@@ -249,10 +228,7 @@ proveSchnorrRegister(
     SchnorrRegisterProof& out) noexcept;
 
 [[nodiscard]] bool
-verifySchnorrRegister(
-    CompressedPoint const& pk,
-    Slice contextId,
-    Slice proof) noexcept;
+verifySchnorrRegister(CompressedPoint const& pk, Slice contextId, Slice proof) noexcept;
 
 struct SendSigmaPublicInput
 {
@@ -268,11 +244,11 @@ struct SendSigmaPublicInput
 
 struct SendSigmaWitness
 {
-    Scalar amount{};     // m
-    Scalar randomness{}; // r (shared ElGamal / amount-commitment blinding)
-    Scalar balance{};    // b
-    Scalar balanceBlind{}; // ρ
-    Scalar senderSk{};   // sk_A
+    Scalar amount{};        // m
+    Scalar randomness{};    // r (shared ElGamal / amount-commitment blinding)
+    Scalar balance{};       // b
+    Scalar balanceBlind{};  // ρ
+    Scalar senderSk{};      // sk_A
 };
 
 [[nodiscard]] bool
@@ -283,10 +259,7 @@ proveSendSigma(
     SendSigmaProof& out) noexcept;
 
 [[nodiscard]] bool
-verifySendSigma(
-    SendSigmaPublicInput const& pub,
-    Slice contextId,
-    Slice proof) noexcept;
+verifySendSigma(SendSigmaPublicInput const& pub, Slice contextId, Slice proof) noexcept;
 
 struct ConvertBackSigmaPublicInput
 {
@@ -331,10 +304,7 @@ proveClawbackSigma(
     ClawbackSigmaProof& out) noexcept;
 
 [[nodiscard]] bool
-verifyClawbackSigma(
-    ClawbackSigmaPublicInput const& pub,
-    Slice contextId,
-    Slice proof) noexcept;
+verifyClawbackSigma(ClawbackSigmaPublicInput const& pub, Slice contextId, Slice proof) noexcept;
 
 /**
  * Compact equality sigma for auditor migration: π = (e || z_x || z_r || z_m),
@@ -343,10 +313,10 @@ verifyClawbackSigma(
  */
 struct AuditorEqualitySigmaPublicInput
 {
-    CompressedPoint issuerKey{};       // pk_I
-    Ciphertext issuerCiphertext{};     // (C1_I, C2_I)
-    CompressedPoint auditorKey{};      // pending auditor pk_A
-    Ciphertext auditorCiphertext{};    // (C1_A, C2_A)
+    CompressedPoint issuerKey{};     // pk_I
+    Ciphertext issuerCiphertext{};   // (C1_I, C2_I)
+    CompressedPoint auditorKey{};    // pending auditor pk_A
+    Ciphertext auditorCiphertext{};  // (C1_A, C2_A)
 };
 
 struct AuditorEqualitySigmaWitness

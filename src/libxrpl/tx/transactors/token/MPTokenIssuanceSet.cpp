@@ -337,8 +337,7 @@ MPTokenIssuanceSet::preclaim(PreclaimContext const& ctx)
             (!sleMptIssuance->isFieldPresent(sfIssuerEncryptionKey) && !settingIssuerKey))
             return tecNO_PERMISSION;
 
-        if (settingAuditorKey &&
-            sleMptIssuance->isFieldPresent(sfPendingAuditorEncryptionKey))
+        if (settingAuditorKey && sleMptIssuance->isFieldPresent(sfPendingAuditorEncryptionKey))
             return tecNO_PERMISSION;
     }
 

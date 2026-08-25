@@ -8,6 +8,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/sha.h>
+
 #include <secp256k1.h>
 
 #include <algorithm>
@@ -26,9 +27,7 @@ ctx()
     struct Holder
     {
         secp256k1_context* impl;
-        Holder()
-            : impl(secp256k1_context_create(
-                  SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN))
+        Holder() : impl(secp256k1_context_create(SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN))
         {
             std::array<unsigned char, 32> seed{};
             cryptoPrng()(seed.data(), seed.size());
@@ -37,8 +36,7 @@ ctx()
                 secureErase(seed.data(), seed.size());
                 if (impl)
                     secp256k1_context_destroy(impl);
-                throw std::runtime_error(
-                    "Unable to randomize confidential secp256k1 context");
+                throw std::runtime_error("Unable to randomize confidential secp256k1 context");
             }
             secureErase(seed.data(), seed.size());
         }
@@ -53,9 +51,8 @@ ctx()
 
 // secp256k1 group order n (big-endian).
 unsigned char const kOrderBE[32] = {
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48,
-    0xA0, 0x3B, 0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE,
+    0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48, 0xA0, 0x3B, 0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
 
 uint256
 sha512HalfRaw(void const* data, std::size_t size) noexcept
@@ -115,10 +112,8 @@ scalarReduce(Slice digest32, Scalar& out) noexcept
     BIGNUM* r = BN_new();
     bool ok = false;
 
-    if (x && n && r &&
-        BN_bin2bn(digest32.data(), 32, x) &&
-        BN_bin2bn(kOrderBE, 32, n) && BN_mod(r, x, n, bnCtx) &&
-        BN_bn2binpad(r, out.data(), 32) == 32)
+    if (x && n && r && BN_bin2bn(digest32.data(), 32, x) && BN_bin2bn(kOrderBE, 32, n) &&
+        BN_mod(r, x, n, bnCtx) && BN_bn2binpad(r, out.data(), 32) == 32)
     {
         ok = true;
     }
@@ -185,8 +180,8 @@ bool
 serializePubkey(secp256k1_pubkey const& p, CompressedPoint& out) noexcept
 {
     std::size_t len = out.size();
-    return secp256k1_ec_pubkey_serialize(
-               ctx(), out.data(), &len, &p, SECP256K1_EC_COMPRESSED) == 1 &&
+    return secp256k1_ec_pubkey_serialize(ctx(), out.data(), &len, &p, SECP256K1_EC_COMPRESSED) ==
+        1 &&
         len == out.size();
 }
 
@@ -285,10 +280,7 @@ pointMulBaseImpl(Scalar const& k, secp256k1_pubkey& out) noexcept
 }
 
 bool
-pointMulImpl(
-    secp256k1_pubkey const& p,
-    Scalar const& k,
-    secp256k1_pubkey& out) noexcept
+pointMulImpl(secp256k1_pubkey const& p, Scalar const& k, secp256k1_pubkey& out) noexcept
 {
     out = p;
     return secp256k1_ec_pubkey_tweak_mul(ctx(), &out, k.data()) == 1;
@@ -301,10 +293,7 @@ pointNegateImpl(secp256k1_pubkey& p) noexcept
 }
 
 bool
-pointCombineImpl(
-    secp256k1_pubkey const* const* ins,
-    std::size_t n,
-    secp256k1_pubkey& out) noexcept
+pointCombineImpl(secp256k1_pubkey const* const* ins, std::size_t n, secp256k1_pubkey& out) noexcept
 {
     std::vector<secp256k1_pubkey> copies(n);
     std::vector<secp256k1_pubkey const*> ptrs(n);
@@ -321,20 +310,14 @@ pointCombineImpl(
 }
 
 bool
-pointAddImpl(
-    secp256k1_pubkey const& a,
-    secp256k1_pubkey const& b,
-    secp256k1_pubkey& out) noexcept
+pointAddImpl(secp256k1_pubkey const& a, secp256k1_pubkey const& b, secp256k1_pubkey& out) noexcept
 {
     secp256k1_pubkey const* ins[2] = {&a, &b};
     return pointCombineImpl(ins, 2, out);
 }
 
 bool
-pointSubImpl(
-    secp256k1_pubkey const& a,
-    secp256k1_pubkey const& b,
-    secp256k1_pubkey& out) noexcept
+pointSubImpl(secp256k1_pubkey const& a, secp256k1_pubkey const& b, secp256k1_pubkey& out) noexcept
 {
     secp256k1_pubkey neg = b;
     if (!pointNegateImpl(neg))
@@ -344,19 +327,13 @@ pointSubImpl(
 
 /** R = aG + bP (a may be zero → omit aG). */
 bool
-linComb(
-    Scalar const& a,
-    Scalar const& b,
-    secp256k1_pubkey const& p,
-    secp256k1_pubkey& out) noexcept
+linComb(Scalar const& a, Scalar const& b, secp256k1_pubkey const& p, secp256k1_pubkey& out) noexcept
 {
     secp256k1_pubkey bP{};
     if (!pointMulImpl(p, b, bP))
         return false;
 
-    bool const aZero = std::all_of(a.begin(), a.end(), [](auto v) {
-        return v == 0;
-    });
+    bool const aZero = std::all_of(a.begin(), a.end(), [](auto v) { return v == 0; });
     if (aZero)
     {
         out = bP;
@@ -475,10 +452,7 @@ pointMulBase(Scalar const& k, CompressedPoint& out) noexcept
 }
 
 bool
-pointAdd(
-    CompressedPoint const& p,
-    CompressedPoint const& q,
-    CompressedPoint& out) noexcept
+pointAdd(CompressedPoint const& p, CompressedPoint const& q, CompressedPoint& out) noexcept
 {
     secp256k1_pubkey a{};
     secp256k1_pubkey b{};
@@ -489,10 +463,7 @@ pointAdd(
 }
 
 bool
-pointSub(
-    CompressedPoint const& p,
-    CompressedPoint const& q,
-    CompressedPoint& out) noexcept
+pointSub(CompressedPoint const& p, CompressedPoint const& q, CompressedPoint& out) noexcept
 {
     secp256k1_pubkey a{};
     secp256k1_pubkey b{};
@@ -503,10 +474,7 @@ pointSub(
 }
 
 bool
-pointMul(
-    CompressedPoint const& p,
-    Scalar const& k,
-    CompressedPoint& out) noexcept
+pointMul(CompressedPoint const& p, Scalar const& k, CompressedPoint& out) noexcept
 {
     secp256k1_pubkey a{};
     secp256k1_pubkey r{};
@@ -516,10 +484,7 @@ pointMul(
 }
 
 bool
-pointAddMulBase(
-    CompressedPoint const& p,
-    Scalar const& k,
-    CompressedPoint& out) noexcept
+pointAddMulBase(CompressedPoint const& p, Scalar const& k, CompressedPoint& out) noexcept
 {
     secp256k1_pubkey a{};
     if (!parsePubkey(p, a))
@@ -588,8 +553,7 @@ elgamalSub(
     Ciphertext& out) noexcept
 {
     Ciphertext rerandomized{};
-    return elgamalRerandomize(a, pk, r, rerandomized) &&
-        pointSub(rerandomized.c1, b.c1, out.c1) &&
+    return elgamalRerandomize(a, pk, r, rerandomized) && pointSub(rerandomized.c1, b.c1, out.c1) &&
         pointSub(rerandomized.c2, b.c2, out.c2);
 }
 
@@ -650,8 +614,7 @@ pedersenNumsGenerator() noexcept
                 pt[0] = prefix;
                 std::memcpy(pt.data() + 1, dig.data(), 32);
                 secp256k1_pubkey pk{};
-                if (secp256k1_ec_pubkey_parse(ctx(), &pk, pt.data(), pt.size()) ==
-                    1)
+                if (secp256k1_ec_pubkey_parse(ctx(), &pk, pt.data(), pt.size()) == 1)
                 {
                     return pt;
                 }
@@ -665,10 +628,7 @@ pedersenNumsGenerator() noexcept
 }
 
 bool
-pedersenCommitScalar(
-    Scalar const& amount,
-    Scalar const& blinding,
-    CompressedPoint& out) noexcept
+pedersenCommitScalar(Scalar const& amount, Scalar const& blinding, CompressedPoint& out) noexcept
 {
     if (secp256k1_ec_seckey_verify(ctx(), blinding.data()) != 1)
         return false;
@@ -697,10 +657,7 @@ pedersenCommitScalar(
 }
 
 bool
-pedersenCommit(
-    std::uint64_t amount,
-    Scalar const& blinding,
-    CompressedPoint& out) noexcept
+pedersenCommit(std::uint64_t amount, Scalar const& blinding, CompressedPoint& out) noexcept
 {
     return pedersenCommitScalar(amountToScalar(amount), blinding, out);
 }
@@ -745,11 +702,7 @@ transactionContextIDSend(
     appendSlice(specific, receiver);
     appendU32(specific, spendingVersion);
     return contextHash(
-        txType,
-        account,
-        issuanceId,
-        sequenceOrTicket,
-        Slice(specific.data(), specific.size()));
+        txType, account, issuanceId, sequenceOrTicket, Slice(specific.data(), specific.size()));
 }
 
 uint256
@@ -777,11 +730,7 @@ transactionContextIDConvert(
     appendSlice(specific, account);
     appendU32(specific, 0);
     return contextHash(
-        txType,
-        account,
-        issuanceId,
-        sequenceOrTicket,
-        Slice(specific.data(), specific.size()));
+        txType, account, issuanceId, sequenceOrTicket, Slice(specific.data(), specific.size()));
 }
 
 uint256
@@ -797,11 +746,7 @@ transactionContextIDClawback(
     appendSlice(specific, holder);
     appendU32(specific, 0);
     return contextHash(
-        txType,
-        account,
-        issuanceId,
-        sequenceOrTicket,
-        Slice(specific.data(), specific.size()));
+        txType, account, issuanceId, sequenceOrTicket, Slice(specific.data(), specific.size()));
 }
 
 uint256
@@ -818,11 +763,7 @@ transactionContextIDMigrateAuditor(
     appendSlice(specific, holder);
     appendU32(specific, targetAuditorVersion);
     return contextHash(
-        txType,
-        account,
-        issuanceId,
-        sequenceOrTicket,
-        Slice(specific.data(), specific.size()));
+        txType, account, issuanceId, sequenceOrTicket, Slice(specific.data(), specific.size()));
 }
 
 bool
@@ -848,8 +789,7 @@ proveSchnorrRegister(
         return false;
 
     std::vector<std::uint8_t> transcript;
-    appendSlice(
-        transcript, Slice(kTagSchnorrRegister.data(), kTagSchnorrRegister.size()));
+    appendSlice(transcript, Slice(kTagSchnorrRegister.data(), kTagSchnorrRegister.size()));
     appendSlice(transcript, Slice(pk.data(), pk.size()));
     appendSlice(transcript, Slice(T.data(), T.size()));
     appendSlice(transcript, contextId);
@@ -869,26 +809,22 @@ proveSchnorrRegister(
 }
 
 bool
-verifySchnorrRegister(
-    CompressedPoint const& pk,
-    Slice contextId,
-    Slice proof) noexcept
+verifySchnorrRegister(CompressedPoint const& pk, Slice contextId, Slice proof) noexcept
 {
     if (proof.size() != kSchnorrRegisterProofBytes)
         return false;
 
     Scalar e{};
     Scalar s{};
-    if (!parseScalar(proof.substr(0, 32), e) ||
-        !parseScalar(proof.substr(32, 32), s))
+    if (!parseScalar(proof.substr(0, 32), e) || !parseScalar(proof.substr(32, 32), s))
         return false;
 
     secp256k1_pubkey P{};
     secp256k1_pubkey sG{};
     secp256k1_pubkey eP{};
     secp256k1_pubkey T{};
-    if (!parsePubkey(pk, P) || !pointMulBaseImpl(s, sG) ||
-        !pointMulImpl(P, e, eP) || !pointSubImpl(sG, eP, T))
+    if (!parsePubkey(pk, P) || !pointMulBaseImpl(s, sG) || !pointMulImpl(P, e, eP) ||
+        !pointSubImpl(sG, eP, T))
         return false;
 
     CompressedPoint Tbytes{};
@@ -896,8 +832,7 @@ verifySchnorrRegister(
         return false;
 
     std::vector<std::uint8_t> transcript;
-    appendSlice(
-        transcript, Slice(kTagSchnorrRegister.data(), kTagSchnorrRegister.size()));
+    appendSlice(transcript, Slice(kTagSchnorrRegister.data(), kTagSchnorrRegister.size()));
     appendSlice(transcript, Slice(pk.data(), pk.size()));
     appendSlice(transcript, Slice(Tbytes.data(), Tbytes.size()));
     appendSlice(transcript, contextId);
@@ -945,9 +880,8 @@ reconstructSendCommitments(
     secp256k1_pubkey PA{};
     secp256k1_pubkey H{};
     if (!parsePubkey(pub.c1, C1) || !parsePubkey(pub.amountCommitment, PCm) ||
-        !parsePubkey(pub.balanceCommitment, PCb) ||
-        !parsePubkey(pub.balanceC1, B1) || !parsePubkey(pub.balanceC2, B2) ||
-        !parsePubkey(pub.senderKey, PA) ||
+        !parsePubkey(pub.balanceCommitment, PCb) || !parsePubkey(pub.balanceC1, B1) ||
+        !parsePubkey(pub.balanceC2, B2) || !parsePubkey(pub.senderKey, PA) ||
         !parsePubkey(pedersenNumsGenerator(), H))
         return false;
 
@@ -955,8 +889,8 @@ reconstructSendCommitments(
     secp256k1_pubkey zrG{};
     secp256k1_pubkey eC1{};
     secp256k1_pubkey t1{};
-    if (!pointMulBaseImpl(zr, zrG) || !pointMulImpl(C1, e, eC1) ||
-        !pointSubImpl(zrG, eC1, t1) || !serializePubkey(t1, T1))
+    if (!pointMulBaseImpl(zr, zrG) || !pointMulImpl(C1, e, eC1) || !pointSubImpl(zrG, eC1, t1) ||
+        !serializePubkey(t1, T1))
         return false;
 
     T2.resize(n);
@@ -967,10 +901,9 @@ reconstructSendCommitments(
         secp256k1_pubkey left{};
         secp256k1_pubkey eC2{};
         secp256k1_pubkey ti{};
-        if (!parsePubkey(pub.recipientKeys[i], Pi) ||
-            !parsePubkey(pub.c2[i], C2i) || !linComb(zm, zr, Pi, left) ||
-            !pointMulImpl(C2i, e, eC2) || !pointSubImpl(left, eC2, ti) ||
-            !serializePubkey(ti, T2[i]))
+        if (!parsePubkey(pub.recipientKeys[i], Pi) || !parsePubkey(pub.c2[i], C2i) ||
+            !linComb(zm, zr, Pi, left) || !pointMulImpl(C2i, e, eC2) ||
+            !pointSubImpl(left, eC2, ti) || !serializePubkey(ti, T2[i]))
             return false;
     }
 
@@ -1064,8 +997,8 @@ proveSendSigma(
     Scalar arb{};
     Scalar ask{};
     Scalar ar{};
-    if (!randomScalar(am) || !randomScalar(ar) || !randomScalar(ab) ||
-        !randomScalar(arb) || !randomScalar(ask))
+    if (!randomScalar(am) || !randomScalar(ar) || !randomScalar(ab) || !randomScalar(arb) ||
+        !randomScalar(ask))
         return false;
 
     secp256k1_pubkey H{};
@@ -1111,8 +1044,7 @@ proveSendSigma(
     }
 
     std::vector<std::uint8_t> transcript;
-    buildSendTranscript(
-        pub, T1, T2, Tm, Tb, Tsk1, Tsk2, contextId, transcript);
+    buildSendTranscript(pub, T1, T2, Tm, Tb, Tsk1, Tsk2, contextId, transcript);
 
     Scalar e{};
     if (!challengeFromTranscript(Slice(transcript.data(), transcript.size()), e))
@@ -1124,8 +1056,7 @@ proveSendSigma(
     Scalar zrho{};
     Scalar zsk{};
     if (!scalarMad(am, e, wit.amount, zm) || !scalarMad(ar, e, wit.randomness, zr) ||
-        !scalarMad(ab, e, wit.balance, zb) ||
-        !scalarMad(arb, e, wit.balanceBlind, zrho) ||
+        !scalarMad(ab, e, wit.balance, zb) || !scalarMad(arb, e, wit.balanceBlind, zrho) ||
         !scalarMad(ask, e, wit.senderSk, zsk))
         return false;
 
@@ -1145,10 +1076,7 @@ proveSendSigma(
 }
 
 bool
-verifySendSigma(
-    SendSigmaPublicInput const& pub,
-    Slice contextId,
-    Slice proof) noexcept
+verifySendSigma(SendSigmaPublicInput const& pub, Slice contextId, Slice proof) noexcept
 {
     if (proof.size() != kSendSigmaProofBytes)
         return false;
@@ -1161,12 +1089,9 @@ verifySendSigma(
     Scalar zsk{};
     // Responses may be any field element; require canonical [1,n-1] for e and
     // non-zero blinding-related responses. Amount/balance responses may be 0.
-    if (!parseScalar(proof.substr(0, 32), e) ||
-        !parseFieldElement(proof.substr(32, 32), zm) ||
-        !parseScalar(proof.substr(64, 32), zr) ||
-        !parseFieldElement(proof.substr(96, 32), zb) ||
-        !parseScalar(proof.substr(128, 32), zrho) ||
-        !parseScalar(proof.substr(160, 32), zsk))
+    if (!parseScalar(proof.substr(0, 32), e) || !parseFieldElement(proof.substr(32, 32), zm) ||
+        !parseScalar(proof.substr(64, 32), zr) || !parseFieldElement(proof.substr(96, 32), zb) ||
+        !parseScalar(proof.substr(128, 32), zrho) || !parseScalar(proof.substr(160, 32), zsk))
         return false;
 
     CompressedPoint T1{};
@@ -1175,13 +1100,11 @@ verifySendSigma(
     CompressedPoint Tb{};
     CompressedPoint Tsk1{};
     CompressedPoint Tsk2{};
-    if (!reconstructSendCommitments(
-            pub, e, zm, zr, zb, zrho, zsk, T1, T2, Tm, Tb, Tsk1, Tsk2))
+    if (!reconstructSendCommitments(pub, e, zm, zr, zb, zrho, zsk, T1, T2, Tm, Tb, Tsk1, Tsk2))
         return false;
 
     std::vector<std::uint8_t> transcript;
-    buildSendTranscript(
-        pub, T1, T2, Tm, Tb, Tsk1, Tsk2, contextId, transcript);
+    buildSendTranscript(pub, T1, T2, Tm, Tb, Tsk1, Tsk2, contextId, transcript);
 
     Scalar e2{};
     if (!challengeFromTranscript(Slice(transcript.data(), transcript.size()), e2))
@@ -1208,8 +1131,7 @@ proveConvertBackSigma(
 
     secp256k1_pubkey H{};
     secp256k1_pubkey B1{};
-    if (!parsePubkey(pedersenNumsGenerator(), H) ||
-        !parsePubkey(pub.balanceC1, B1))
+    if (!parsePubkey(pedersenNumsGenerator(), H) || !parsePubkey(pub.balanceC1, B1))
         return false;
 
     CompressedPoint Tsk1{};
@@ -1231,9 +1153,7 @@ proveConvertBackSigma(
     }
 
     std::vector<std::uint8_t> transcript;
-    appendSlice(
-        transcript,
-        Slice(kTagConvertBackSigma.data(), kTagConvertBackSigma.size()));
+    appendSlice(transcript, Slice(kTagConvertBackSigma.data(), kTagConvertBackSigma.size()));
     appendPoint(transcript, pub.holderKey);
     appendPoint(transcript, pub.balanceC1);
     appendPoint(transcript, pub.balanceC2);
@@ -1250,8 +1170,7 @@ proveConvertBackSigma(
     Scalar zb{};
     Scalar zrho{};
     Scalar zsk{};
-    if (!scalarMad(tb, e, wit.balance, zb) ||
-        !scalarMad(trho, e, wit.balanceBlind, zrho) ||
+    if (!scalarMad(tb, e, wit.balance, zb) || !scalarMad(trho, e, wit.balanceBlind, zrho) ||
         !scalarMad(tsk, e, wit.holderSk, zsk))
         return false;
 
@@ -1280,10 +1199,8 @@ verifyConvertBackSigma(
     Scalar zb{};
     Scalar zrho{};
     Scalar zsk{};
-    if (!parseScalar(proof.substr(0, 32), e) ||
-        !parseFieldElement(proof.substr(32, 32), zb) ||
-        !parseScalar(proof.substr(64, 32), zrho) ||
-        !parseScalar(proof.substr(96, 32), zsk))
+    if (!parseScalar(proof.substr(0, 32), e) || !parseFieldElement(proof.substr(32, 32), zb) ||
+        !parseScalar(proof.substr(64, 32), zrho) || !parseScalar(proof.substr(96, 32), zsk))
         return false;
 
     secp256k1_pubkey PA{};
@@ -1292,8 +1209,7 @@ verifyConvertBackSigma(
     secp256k1_pubkey PCb{};
     secp256k1_pubkey H{};
     if (!parsePubkey(pub.holderKey, PA) || !parsePubkey(pub.balanceC1, B1) ||
-        !parsePubkey(pub.balanceC2, B2) ||
-        !parsePubkey(pub.balanceCommitment, PCb) ||
+        !parsePubkey(pub.balanceC2, B2) || !parsePubkey(pub.balanceCommitment, PCb) ||
         !parsePubkey(pedersenNumsGenerator(), H))
         return false;
 
@@ -1331,9 +1247,7 @@ verifyConvertBackSigma(
     }
 
     std::vector<std::uint8_t> transcript;
-    appendSlice(
-        transcript,
-        Slice(kTagConvertBackSigma.data(), kTagConvertBackSigma.size()));
+    appendSlice(transcript, Slice(kTagConvertBackSigma.data(), kTagConvertBackSigma.size()));
     appendPoint(transcript, pub.holderKey);
     appendPoint(transcript, pub.balanceC1);
     appendPoint(transcript, pub.balanceC2);
@@ -1389,8 +1303,7 @@ proveClawbackSigma(
         return false;
 
     std::vector<std::uint8_t> transcript;
-    appendSlice(
-        transcript, Slice(kTagClawbackSigma.data(), kTagClawbackSigma.size()));
+    appendSlice(transcript, Slice(kTagClawbackSigma.data(), kTagClawbackSigma.size()));
     appendPoint(transcript, pub.issuerKey);
     appendPoint(transcript, pub.issuerBalance.c1);
     appendPoint(transcript, pub.issuerBalance.c2);
@@ -1414,18 +1327,14 @@ proveClawbackSigma(
 }
 
 bool
-verifyClawbackSigma(
-    ClawbackSigmaPublicInput const& pub,
-    Slice contextId,
-    Slice proof) noexcept
+verifyClawbackSigma(ClawbackSigmaPublicInput const& pub, Slice contextId, Slice proof) noexcept
 {
     if (proof.size() != kClawbackSigmaProofBytes)
         return false;
 
     Scalar e{};
     Scalar z{};
-    if (!parseScalar(proof.substr(0, 32), e) ||
-        !parseScalar(proof.substr(32, 32), z))
+    if (!parseScalar(proof.substr(0, 32), e) || !parseScalar(proof.substr(32, 32), z))
         return false;
 
     if (pub.revealedAmount == 0)
@@ -1439,8 +1348,7 @@ verifyClawbackSigma(
     secp256k1_pubkey C1{};
     secp256k1_pubkey C2{};
     secp256k1_pubkey MG{};
-    if (!parsePubkey(pub.issuerKey, P) ||
-        !parsePubkey(pub.issuerBalance.c1, C1) ||
+    if (!parsePubkey(pub.issuerKey, P) || !parsePubkey(pub.issuerBalance.c1, C1) ||
         !parsePubkey(pub.issuerBalance.c2, C2) || !parsePubkey(mG, MG))
         return false;
 
@@ -1450,8 +1358,8 @@ verifyClawbackSigma(
         secp256k1_pubkey zG{};
         secp256k1_pubkey eP{};
         secp256k1_pubkey t{};
-        if (!pointMulBaseImpl(z, zG) || !pointMulImpl(P, e, eP) ||
-            !pointSubImpl(zG, eP, t) || !serializePubkey(t, T1))
+        if (!pointMulBaseImpl(z, zG) || !pointMulImpl(P, e, eP) || !pointSubImpl(zG, eP, t) ||
+            !serializePubkey(t, T1))
             return false;
     }
 
@@ -1469,8 +1377,7 @@ verifyClawbackSigma(
     }
 
     std::vector<std::uint8_t> transcript;
-    appendSlice(
-        transcript, Slice(kTagClawbackSigma.data(), kTagClawbackSigma.size()));
+    appendSlice(transcript, Slice(kTagClawbackSigma.data(), kTagClawbackSigma.size()));
     appendPoint(transcript, pub.issuerKey);
     appendPoint(transcript, pub.issuerBalance.c1);
     appendPoint(transcript, pub.issuerBalance.c2);
@@ -1498,8 +1405,7 @@ buildAuditorEqualityTranscript(
     std::vector<std::uint8_t>& transcript)
 {
     appendSlice(
-        transcript,
-        Slice(kTagAuditorEqualitySigma.data(), kTagAuditorEqualitySigma.size()));
+        transcript, Slice(kTagAuditorEqualitySigma.data(), kTagAuditorEqualitySigma.size()));
     appendPoint(transcript, pub.issuerKey);
     appendPoint(transcript, pub.issuerCiphertext.c1);
     appendPoint(transcript, pub.issuerCiphertext.c2);
@@ -1531,12 +1437,9 @@ reconstructAuditorEqualityCommitments(
     secp256k1_pubkey PA{};
     secp256k1_pubkey C1A{};
     secp256k1_pubkey C2A{};
-    if (!parsePubkey(pub.issuerKey, PI) ||
-        !parsePubkey(pub.issuerCiphertext.c1, C1I) ||
-        !parsePubkey(pub.issuerCiphertext.c2, C2I) ||
-        !parsePubkey(pub.auditorKey, PA) ||
-        !parsePubkey(pub.auditorCiphertext.c1, C1A) ||
-        !parsePubkey(pub.auditorCiphertext.c2, C2A))
+    if (!parsePubkey(pub.issuerKey, PI) || !parsePubkey(pub.issuerCiphertext.c1, C1I) ||
+        !parsePubkey(pub.issuerCiphertext.c2, C2I) || !parsePubkey(pub.auditorKey, PA) ||
+        !parsePubkey(pub.auditorCiphertext.c1, C1A) || !parsePubkey(pub.auditorCiphertext.c2, C2A))
         return false;
 
     // Tx = zx·G - e·pk_I
@@ -1544,8 +1447,8 @@ reconstructAuditorEqualityCommitments(
         secp256k1_pubkey zxG{};
         secp256k1_pubkey ePI{};
         secp256k1_pubkey t{};
-        if (!pointMulBaseImpl(zx, zxG) || !pointMulImpl(PI, e, ePI) ||
-            !pointSubImpl(zxG, ePI, t) || !serializePubkey(t, Tx))
+        if (!pointMulBaseImpl(zx, zxG) || !pointMulImpl(PI, e, ePI) || !pointSubImpl(zxG, ePI, t) ||
+            !serializePubkey(t, Tx))
             return false;
     }
 
@@ -1592,16 +1495,14 @@ auditorEqualityWitnessMatches(
         return false;
 
     CompressedPoint expectC1A{};
-    if (!pointMulBase(wit.randomness, expectC1A) ||
-        expectC1A != pub.auditorCiphertext.c1)
+    if (!pointMulBase(wit.randomness, expectC1A) || expectC1A != pub.auditorCiphertext.c1)
         return false;
 
     secp256k1_pubkey C1I{};
     secp256k1_pubkey PA{};
     secp256k1_pubkey expectC2I{};
     secp256k1_pubkey expectC2A{};
-    if (!parsePubkey(pub.issuerCiphertext.c1, C1I) ||
-        !parsePubkey(pub.auditorKey, PA) ||
+    if (!parsePubkey(pub.issuerCiphertext.c1, C1I) || !parsePubkey(pub.auditorKey, PA) ||
         !linComb(wit.amount, wit.issuerSk, C1I, expectC2I) ||
         !linComb(wit.amount, wit.randomness, PA, expectC2A))
         return false;
@@ -1626,8 +1527,7 @@ proveAuditorEqualitySigma(
     if (secp256k1_ec_seckey_verify(ctx(), wit.issuerSk.data()) != 1 ||
         secp256k1_ec_seckey_verify(ctx(), wit.randomness.data()) != 1)
         return false;
-    if (!isZeroScalar(wit.amount) &&
-        secp256k1_ec_seckey_verify(ctx(), wit.amount.data()) != 1)
+    if (!isZeroScalar(wit.amount) && secp256k1_ec_seckey_verify(ctx(), wit.amount.data()) != 1)
         return false;
     if (!auditorEqualityWitnessMatches(pub, wit))
         return false;
@@ -1650,8 +1550,8 @@ proveAuditorEqualitySigma(
     {
         secp256k1_pubkey C1I{};
         secp256k1_pubkey t{};
-        if (!parsePubkey(pub.issuerCiphertext.c1, C1I) ||
-            !linComb(am, ax, C1I, t) || !serializePubkey(t, T2I))
+        if (!parsePubkey(pub.issuerCiphertext.c1, C1I) || !linComb(am, ax, C1I, t) ||
+            !serializePubkey(t, T2I))
             return false;
     }
 
@@ -1659,8 +1559,7 @@ proveAuditorEqualitySigma(
     {
         secp256k1_pubkey PA{};
         secp256k1_pubkey t{};
-        if (!parsePubkey(pub.auditorKey, PA) || !linComb(am, ar, PA, t) ||
-            !serializePubkey(t, T2A))
+        if (!parsePubkey(pub.auditorKey, PA) || !linComb(am, ar, PA, t) || !serializePubkey(t, T2A))
             return false;
     }
 
@@ -1674,8 +1573,7 @@ proveAuditorEqualitySigma(
     Scalar zx{};
     Scalar zr{};
     Scalar zm{};
-    if (!scalarMad(ax, e, wit.issuerSk, zx) ||
-        !scalarMad(ar, e, wit.randomness, zr) ||
+    if (!scalarMad(ax, e, wit.issuerSk, zx) || !scalarMad(ar, e, wit.randomness, zr) ||
         !scalarMad(am, e, wit.amount, zm))
         return false;
 
@@ -1705,18 +1603,15 @@ verifyAuditorEqualitySigma(
     Scalar zr{};
     Scalar zm{};
     // All compact fields are scalars in [1, n-1].
-    if (!parseScalar(proof.substr(0, 32), e) ||
-        !parseScalar(proof.substr(32, 32), zx) ||
-        !parseScalar(proof.substr(64, 32), zr) ||
-        !parseScalar(proof.substr(96, 32), zm))
+    if (!parseScalar(proof.substr(0, 32), e) || !parseScalar(proof.substr(32, 32), zx) ||
+        !parseScalar(proof.substr(64, 32), zr) || !parseScalar(proof.substr(96, 32), zm))
         return false;
 
     CompressedPoint Tx{};
     CompressedPoint T1A{};
     CompressedPoint T2I{};
     CompressedPoint T2A{};
-    if (!reconstructAuditorEqualityCommitments(
-            pub, e, zx, zr, zm, Tx, T1A, T2I, T2A))
+    if (!reconstructAuditorEqualityCommitments(pub, e, zx, zr, zm, Tx, T1A, T2I, T2A))
         return false;
 
     std::vector<std::uint8_t> transcript;

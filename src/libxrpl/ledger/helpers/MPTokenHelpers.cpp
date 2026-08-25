@@ -184,8 +184,7 @@ authorizeMPToken(
                 sleMpt->isFieldPresent(sfHolderEncryptionKey))
             {
                 auto sleIssuance = view.peek(keylet::mptIssuance(mptIssuanceID));
-                if (!sleIssuance ||
-                    (*sleIssuance)[sfConfidentialOutstandingAmount] != 0 ||
+                if (!sleIssuance || (*sleIssuance)[sfConfidentialOutstandingAmount] != 0 ||
                     auditorMigrationPending(*sleIssuance))
                     return tecHAS_OBLIGATIONS;
                 if (auto const ter = clearConfidentialState(*sleIssuance, *sleMpt);

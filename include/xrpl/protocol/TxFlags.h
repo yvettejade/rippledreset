@@ -377,11 +377,11 @@ inline constexpr FlagValue tmfMPTSetCanClawback = 0x00000400;
 inline constexpr FlagValue tmfMPTClearCanClawback = 0x00000800;
 // One-way enable; Updated XLS lists 0x40 which collides with tmfMPTSetCanTrade in this tree.
 inline constexpr FlagValue tmfMPTSetCanHoldConfidentialBalance = 0x00001000;
-inline constexpr FlagValue tmfMPTokenIssuanceSetMutableMask = ~(
-    tmfMPTSetCanLock | tmfMPTClearCanLock | tmfMPTSetRequireAuth | tmfMPTClearRequireAuth |
-    tmfMPTSetCanEscrow | tmfMPTClearCanEscrow | tmfMPTSetCanTrade | tmfMPTClearCanTrade |
-    tmfMPTSetCanTransfer | tmfMPTClearCanTransfer | tmfMPTSetCanClawback | tmfMPTClearCanClawback |
-    tmfMPTSetCanHoldConfidentialBalance);
+inline constexpr FlagValue tmfMPTokenIssuanceSetMutableMask =
+    ~(tmfMPTSetCanLock | tmfMPTClearCanLock | tmfMPTSetRequireAuth | tmfMPTClearRequireAuth |
+      tmfMPTSetCanEscrow | tmfMPTClearCanEscrow | tmfMPTSetCanTrade | tmfMPTClearCanTrade |
+      tmfMPTSetCanTransfer | tmfMPTClearCanTransfer | tmfMPTSetCanClawback |
+      tmfMPTClearCanClawback | tmfMPTSetCanHoldConfidentialBalance);
 
 // Prior to fixRemoveNFTokenAutoTrustLine, transfer of an NFToken between accounts allowed a
 // TrustLine to be added to the issuer of that token without explicit permission from that issuer.

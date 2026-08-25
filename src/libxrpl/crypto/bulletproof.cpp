@@ -1,11 +1,11 @@
-#include <xrpl/crypto/confidential.h>
-
 #include <xrpl/basics/Slice.h>
+#include <xrpl/crypto/confidential.h>
 #include <xrpl/crypto/csprng.h>
 #include <xrpl/crypto/secure_erase.h>
 
 #include <openssl/bn.h>
 #include <openssl/sha.h>
+
 #include <secp256k1.h>
 
 #include <algorithm>
@@ -30,9 +30,7 @@ bpCtx()
     struct Holder
     {
         secp256k1_context* impl;
-        Holder()
-            : impl(secp256k1_context_create(
-                  SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN))
+        Holder() : impl(secp256k1_context_create(SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN))
         {
             std::array<unsigned char, 32> seed{};
             cryptoPrng()(seed.data(), seed.size());
@@ -41,8 +39,7 @@ bpCtx()
                 secureErase(seed.data(), seed.size());
                 if (impl)
                     secp256k1_context_destroy(impl);
-                throw std::runtime_error(
-                    "Unable to randomize Bulletproof secp256k1 context");
+                throw std::runtime_error("Unable to randomize Bulletproof secp256k1 context");
             }
             secureErase(seed.data(), seed.size());
         }
@@ -56,9 +53,8 @@ bpCtx()
 }
 
 unsigned char const kOrderBE[32] = {
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48,
-    0xA0, 0x3B, 0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE,
+    0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48, 0xA0, 0x3B, 0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
 
 bool
 isZero(Scalar const& s)
@@ -187,8 +183,8 @@ bool
 serPk(secp256k1_pubkey const& p, CompressedPoint& out)
 {
     std::size_t len = out.size();
-    return secp256k1_ec_pubkey_serialize(
-               bpCtx(), out.data(), &len, &p, SECP256K1_EC_COMPRESSED) == 1 &&
+    return secp256k1_ec_pubkey_serialize(bpCtx(), out.data(), &len, &p, SECP256K1_EC_COMPRESSED) ==
+        1 &&
         len == out.size();
 }
 
@@ -240,10 +236,7 @@ subPk(secp256k1_pubkey const& a, secp256k1_pubkey const& b, secp256k1_pubkey& ou
 
 /** MSM: sum k_i P_i, skipping zero scalars. Returns false if the result is infinity. */
 bool
-msm(
-    std::vector<secp256k1_pubkey> const& pts,
-    std::vector<Scalar> const& ks,
-    secp256k1_pubkey& out)
+msm(std::vector<secp256k1_pubkey> const& pts, std::vector<Scalar> const& ks, secp256k1_pubkey& out)
 {
     if (pts.size() != ks.size() || pts.empty())
         return false;
@@ -309,8 +302,7 @@ generatorPrefix(
         for (std::size_t i = have; i < n; ++i)
         {
             CompressedPoint p{};
-            if (!numsPoint(tag, static_cast<std::uint32_t>(i), p) ||
-                !parsePk(p, cache[i]))
+            if (!numsPoint(tag, static_cast<std::uint32_t>(i), p) || !parsePk(p, cache[i]))
             {
                 cache.resize(have);
                 return {};
@@ -660,8 +652,8 @@ proveRange(
     Scalar t2{};
     Scalar t1a{};
     Scalar t1b{};
-    if (!vectorInner(l0, r0, t0) || !vectorInner(l1, r1, t2) ||
-        !vectorInner(l0, r1, t1a) || !vectorInner(l1, r0, t1b))
+    if (!vectorInner(l0, r0, t0) || !vectorInner(l1, r1, t2) || !vectorInner(l0, r1, t1a) ||
+        !vectorInner(l1, r0, t1b))
         return false;
     Scalar t1{};
     if (!scalarAdd(t1a, t1b, t1))
@@ -1030,8 +1022,7 @@ verifyRange(std::vector<CompressedPoint> const& Vs, RangeProof const& proof)
                 return false;
         }
         Scalar twoTerm{};
-        if (!scalarMul(zpow2, twoN[bit], twoTerm) ||
-            !scalarMul(twoTerm, yInvPow[i], twoTerm) ||
+        if (!scalarMul(zpow2, twoN[bit], twoTerm) || !scalarMul(twoTerm, yInvPow[i], twoTerm) ||
             !scalarAdd(z, twoTerm, hCoeff[i]))
             return false;
     }
@@ -1039,8 +1030,7 @@ verifyRange(std::vector<CompressedPoint> const& Vs, RangeProof const& proof)
     secp256k1_pubkey P{};
     secp256k1_pubkey A{};
     secp256k1_pubkey Sp{};
-    if (!parsePk(proof.A, A) || !parsePk(proof.S, Sp) || !mulPoint(Sp, x, tmp) ||
-        !addPk(A, tmp, P))
+    if (!parsePk(proof.A, A) || !parsePk(proof.S, Sp) || !mulPoint(Sp, x, tmp) || !addPk(A, tmp, P))
         return false;
     if (!msm(Gv, gCoeff, tmp) || !addPk(P, tmp, P))
         return false;
@@ -1125,11 +1115,7 @@ proveBulletproofAggregated(
     std::array<std::uint8_t, kAggregatedBulletproofBytes>& out) noexcept
 {
     RangeProof proof;
-    if (!proveRange(
-            {commitment0, commitment1},
-            {value0, value1},
-            {blinding0, blinding1},
-            proof))
+    if (!proveRange({commitment0, commitment1}, {value0, value1}, {blinding0, blinding1}, proof))
         return false;
     return serializeProof(proof, out);
 }
@@ -1186,8 +1172,7 @@ verifyBulletproofSend(
     if (!pointMulBase(amountToScalar(1), oneG) ||
         !pointSub(amountCommitment, oneG, positiveAmountCommitment))
         return false;
-    return verifyBulletproofAggregated(
-        positiveAmountCommitment, remainingCommitment, proof);
+    return verifyBulletproofAggregated(positiveAmountCommitment, remainingCommitment, proof);
 }
 
 }  // namespace confidential

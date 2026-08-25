@@ -192,7 +192,8 @@ target_link_libraries(
 
 add_module(xrpl tx)
 target_link_libraries(
-    xrpl.libxrpl.tx PUBLIC xrpl.libxrpl.ledger xrpl.libxrpl.crypto
+    xrpl.libxrpl.tx
+    PUBLIC xrpl.libxrpl.ledger xrpl.libxrpl.crypto
 )
 
 add_library(xrpl.libxrpl)

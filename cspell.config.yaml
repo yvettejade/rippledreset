@@ -73,6 +73,12 @@ words:
   - clawback
   - clawbacks
   - ElGamal
+  - Gplus
+  - Pedersen
+  - Rerandomize
+  - Schnorr
+  - pedersen
+  - rerand
   - ConfidentialMPTClawback
   - ConfidentialMPTSend
   - ConfidentialMPTMergeInbox
@@ -190,6 +196,7 @@ words:
   - mptokenissuance
   - mptokens
   - mpts
+  - "MPT's"
   - mtgox
   - multisig
   - multisign

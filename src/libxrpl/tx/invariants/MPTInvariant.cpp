@@ -458,14 +458,11 @@ ValidMPTPayment::finalize(
             (void)id;
             static constexpr auto kIBefore = static_cast<std::size_t>(Order::Before);
             static constexpr auto kIAfter = static_cast<std::size_t>(Order::After);
-            auto const confidentialDelta =
-                data.confidential[kIAfter] - data.confidential[kIBefore];
+            auto const confidentialDelta = data.confidential[kIAfter] - data.confidential[kIBefore];
             auto const balanceDelta = data.mptAmount + confidentialDelta;
             bool const addOverflows =
-                (balanceDelta > 0 &&
-                 data.outstanding[kIBefore] > (signedMax - balanceDelta)) ||
-                (balanceDelta < 0 &&
-                 data.outstanding[kIBefore] < (-signedMax - balanceDelta));
+                (balanceDelta > 0 && data.outstanding[kIBefore] > (signedMax - balanceDelta)) ||
+                (balanceDelta < 0 && data.outstanding[kIBefore] < (-signedMax - balanceDelta));
             if (addOverflows ||
                 data.outstanding[kIAfter] != (data.outstanding[kIBefore] + balanceDelta))
             {
@@ -640,8 +637,7 @@ ValidConfidentialMPT::visitEntry(
             invalid_ = true;
         auto const pending = current->isFieldPresent(sfPendingAuditorEncryptionKey);
         auto const remaining = (*current)[~sfAuditorMigrationCount].value_or(0);
-        if (pending != (remaining != 0) ||
-            remaining > (*current)[sfConfidentialHolderCount] ||
+        if (pending != (remaining != 0) || remaining > (*current)[sfConfidentialHolderCount] ||
             (pending && !current->isFieldPresent(sfIssuerEncryptionKey)))
             invalid_ = true;
         return;

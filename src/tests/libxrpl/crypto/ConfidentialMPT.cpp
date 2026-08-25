@@ -1,10 +1,8 @@
-#include <helpers/TestFamily.h>
-#include <helpers/TestSink.h>
+#include <xrpl/ledger/helpers/ConfidentialMPT.h>
 
 #include <xrpl/basics/Slice.h>
 #include <xrpl/crypto/confidential.h>
 #include <xrpl/ledger/Ledger.h>
-#include <xrpl/ledger/helpers/ConfidentialMPT.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/SField.h>
@@ -17,6 +15,8 @@
 #include <xrpl/protocol/XRPAmount.h>
 
 #include <gtest/gtest.h>
+#include <helpers/TestFamily.h>
+#include <helpers/TestSink.h>
 
 #include <array>
 #include <cstdint>
@@ -124,14 +124,10 @@ TEST(ConfidentialMPTHelpers, PreflightAndParseRejectMalformed)
 {
     EXPECT_EQ(preflightCiphertext(Slice(nullptr, 0)), temBAD_CIPHERTEXT);
     std::array<std::uint8_t, 65> shortCt{};
-    EXPECT_EQ(
-        preflightCiphertext(Slice(shortCt.data(), shortCt.size())),
-        temBAD_CIPHERTEXT);
+    EXPECT_EQ(preflightCiphertext(Slice(shortCt.data(), shortCt.size())), temBAD_CIPHERTEXT);
 
     Ciphertext ct{};
-    EXPECT_EQ(
-        parseCiphertextField(Slice(shortCt.data(), shortCt.size()), ct),
-        tecBAD_PROOF);
+    EXPECT_EQ(parseCiphertextField(Slice(shortCt.data(), shortCt.size()), ct), tecBAD_PROOF);
 
     std::array<std::uint8_t, 33> badPt{};
     badPt[0] = 0x04;
@@ -151,8 +147,7 @@ TEST(ConfidentialMPTHelpers, PreflightAcceptsValidCiphertextAndPoint)
     EXPECT_EQ(preflightCiphertext(Slice(raw.data(), raw.size())), tesSUCCESS);
 
     Ciphertext parsed{};
-    EXPECT_EQ(
-        parseCiphertextField(Slice(raw.data(), raw.size()), parsed), tesSUCCESS);
+    EXPECT_EQ(parseCiphertextField(Slice(raw.data(), raw.size()), parsed), tesSUCCESS);
     EXPECT_EQ(parsed.c1, ct.c1);
     EXPECT_EQ(parsed.c2, ct.c2);
 
@@ -185,8 +180,7 @@ TEST(ConfidentialMPTHelpers, SameC1AndEncZeroFor)
     CompressedPoint badPk{};
     badPk[0] = 0x02;
     Ciphertext fail{};
-    EXPECT_EQ(
-        encZeroFor(view, issuance, holderAcct, badPk, fail), tecINTERNAL);
+    EXPECT_EQ(encZeroFor(view, issuance, holderAcct, badPk, fail), tecINTERNAL);
 }
 
 TEST(ConfidentialMPTHelpers, VersionWrapAndSetCiphertextField)
@@ -242,14 +236,11 @@ TEST(ConfidentialMPTHelpers, BaseFeeWithAndWithoutSigners)
 
     auto const bare = makeBareTx();
     EXPECT_EQ(
-        confidentialMptBaseFee(view, bare),
-        XRPAmount{10} * kConfidentialTransferFeeMultiplier);
+        confidentialMptBaseFee(view, bare), XRPAmount{10} * kConfidentialTransferFeeMultiplier);
 
     auto const multi = makeTxWithSigners(2);
     // (base + 2*base) * multiplier = 3 * 10 * 10
-    EXPECT_EQ(
-        confidentialMptBaseFee(view, multi),
-        XRPAmount{300});
+    EXPECT_EQ(confidentialMptBaseFee(view, multi), XRPAmount{300});
 }
 
 TEST(ConfidentialMPTHelpers, CheckPlaintextCiphertextsPaths)
@@ -269,39 +260,18 @@ TEST(ConfidentialMPTHelpers, CheckPlaintextCiphertextsPaths)
 
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            std::nullopt,
-            holderCt,
-            issuerCt,
-            std::nullopt),
+            amount, r, holder.pk, issuer.pk, std::nullopt, holderCt, issuerCt, std::nullopt),
         tesSUCCESS);
 
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            auditor.pk,
-            holderCt,
-            issuerCt,
-            auditorCt),
+            amount, r, holder.pk, issuer.pk, auditor.pk, holderCt, issuerCt, auditorCt),
         tesSUCCESS);
 
     // Missing auditor ciphertext when auditor key present
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            auditor.pk,
-            holderCt,
-            issuerCt,
-            std::nullopt),
+            amount, r, holder.pk, issuer.pk, auditor.pk, holderCt, issuerCt, std::nullopt),
         tecNO_PERMISSION);
 
     // Wrong holder ciphertext
@@ -309,14 +279,7 @@ TEST(ConfidentialMPTHelpers, CheckPlaintextCiphertextsPaths)
     wrongH.c2[32] ^= 0x01;
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            std::nullopt,
-            wrongH,
-            issuerCt,
-            std::nullopt),
+            amount, r, holder.pk, issuer.pk, std::nullopt, wrongH, issuerCt, std::nullopt),
         tecBAD_PROOF);
 
     // Wrong issuer ciphertext
@@ -324,14 +287,7 @@ TEST(ConfidentialMPTHelpers, CheckPlaintextCiphertextsPaths)
     wrongI.c2[32] ^= 0x01;
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            std::nullopt,
-            holderCt,
-            wrongI,
-            std::nullopt),
+            amount, r, holder.pk, issuer.pk, std::nullopt, holderCt, wrongI, std::nullopt),
         tecBAD_PROOF);
 
     // Divergent C1 values (different randomness)
@@ -340,14 +296,7 @@ TEST(ConfidentialMPTHelpers, CheckPlaintextCiphertextsPaths)
     ASSERT_TRUE(elgamalEncrypt(holder.pk, amount, r2, holderAlt));
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            std::nullopt,
-            holderAlt,
-            issuerCt,
-            std::nullopt),
+            amount, r, holder.pk, issuer.pk, std::nullopt, holderAlt, issuerCt, std::nullopt),
         tecBAD_PROOF);
 
     // Bad auditor ciphertext
@@ -355,14 +304,7 @@ TEST(ConfidentialMPTHelpers, CheckPlaintextCiphertextsPaths)
     wrongA.c2[32] ^= 0x01;
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            auditor.pk,
-            holderCt,
-            issuerCt,
-            wrongA),
+            amount, r, holder.pk, issuer.pk, auditor.pk, holderCt, issuerCt, wrongA),
         tecBAD_PROOF);
 
     // Invalid holder pk makes expected encryption fail
@@ -370,26 +312,12 @@ TEST(ConfidentialMPTHelpers, CheckPlaintextCiphertextsPaths)
     badPk[0] = 0x02;
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            badPk,
-            issuer.pk,
-            std::nullopt,
-            holderCt,
-            issuerCt,
-            std::nullopt),
+            amount, r, badPk, issuer.pk, std::nullopt, holderCt, issuerCt, std::nullopt),
         tecBAD_PROOF);
 
     // Invalid auditor pk with otherwise valid inputs
     EXPECT_EQ(
         checkPlaintextCiphertexts(
-            amount,
-            r,
-            holder.pk,
-            issuer.pk,
-            badPk,
-            holderCt,
-            issuerCt,
-            auditorCt),
+            amount, r, holder.pk, issuer.pk, badPk, holderCt, issuerCt, auditorCt),
         tecBAD_PROOF);
 }

@@ -146,8 +146,7 @@ ConfidentialMPTConvertBack::doApply()
         return ter;
 
     confidential::Ciphertext spending{};
-    if (auto const ter =
-            parseCiphertextField((*sleMpt)[sfConfidentialBalanceSpending], spending);
+    if (auto const ter = parseCiphertextField((*sleMpt)[sfConfidentialBalanceSpending], spending);
         !isTesSuccess(ter))
         return ter;
 
@@ -231,8 +230,7 @@ ConfidentialMPTConvertBack::doApply()
     // MPTokenAuthorize under the same global-zero condition.
     if ((*sleIssuance)[sfConfidentialOutstandingAmount] == 0)
     {
-        if (auto const ter = clearConfidentialState(*sleIssuance, *sleMpt);
-            !isTesSuccess(ter))
+        if (auto const ter = clearConfidentialState(*sleIssuance, *sleMpt); !isTesSuccess(ter))
             return ter;
     }
     else

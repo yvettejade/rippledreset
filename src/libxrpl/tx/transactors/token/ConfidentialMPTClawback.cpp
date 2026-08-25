@@ -94,8 +94,7 @@ ConfidentialMPTClawback::doApply()
         (*sleIssuance)[sfConfidentialOutstandingAmount] - amount;
     (*sleIssuance)[sfOutstandingAmount] = (*sleIssuance)[sfOutstandingAmount] - amount;
 
-    if (auto const ter = clearConfidentialState(*sleIssuance, *sleMpt);
-        !isTesSuccess(ter))
+    if (auto const ter = clearConfidentialState(*sleIssuance, *sleMpt); !isTesSuccess(ter))
         return ter;
     view().update(sleMpt);
     view().update(sleIssuance);

@@ -63,8 +63,7 @@ ConfidentialMPTMergeInbox::doApply()
     if (auto const ter = parseCiphertextField((*sleMpt)[sfConfidentialBalanceInbox], inbox);
         !isTesSuccess(ter))
         return ter;
-    if (auto const ter =
-            parseCiphertextField((*sleMpt)[sfConfidentialBalanceSpending], spending);
+    if (auto const ter = parseCiphertextField((*sleMpt)[sfConfidentialBalanceSpending], spending);
         !isTesSuccess(ter))
         return ter;
     confidential::Ciphertext merged{};

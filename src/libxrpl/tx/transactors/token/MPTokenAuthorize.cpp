@@ -88,8 +88,7 @@ MPTokenAuthorize::preclaim(PreclaimContext const& ctx)
             {
                 auto const issuance =
                     ctx.view.read(keylet::mptIssuance(ctx.tx[sfMPTokenIssuanceID]));
-                if (!issuance ||
-                    (*issuance)[sfConfidentialOutstandingAmount] != 0 ||
+                if (!issuance || (*issuance)[sfConfidentialOutstandingAmount] != 0 ||
                     auditorMigrationPending(*issuance))
                     return tecHAS_OBLIGATIONS;
             }

@@ -81,10 +81,10 @@ TEST(ConfidentialCrypto, RejectsMalformedScalarAndPoint)
     EXPECT_FALSE(parseScalar(Slice(zero.data(), zero.size()), s));
 
     // n itself is invalid
-    unsigned char const kOrder[32] = {
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48,
-        0xA0, 0x3B, 0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
+    unsigned char const kOrder[32] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE,
+                                      0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48, 0xA0, 0x3B,
+                                      0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
     EXPECT_FALSE(parseScalar(Slice(kOrder, 32), s));
 
     CompressedPoint p{};
@@ -199,26 +199,23 @@ TEST(ConfidentialCrypto, SchnorrRegisterRoundTrip)
     auto kp = makeKey();
     auto a = acct(9);
     auto id = issuance(8);
-    auto ctx = transactionContextIDConvert(
-        85, Slice(a.data(), a.size()), Slice(id.data(), id.size()), 1);
+    auto ctx =
+        transactionContextIDConvert(85, Slice(a.data(), a.size()), Slice(id.data(), id.size()), 1);
 
     SchnorrRegisterProof proof{};
-    ASSERT_TRUE(proveSchnorrRegister(
-        kp.sk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
+    ASSERT_TRUE(proveSchnorrRegister(kp.sk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
     EXPECT_TRUE(verifySchnorrRegister(
         kp.pk, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 
     // Wrong context rejected
-    auto ctxBad = transactionContextIDConvert(
-        85, Slice(a.data(), a.size()), Slice(id.data(), id.size()), 2);
+    auto ctxBad =
+        transactionContextIDConvert(85, Slice(a.data(), a.size()), Slice(id.data(), id.size()), 2);
     EXPECT_FALSE(verifySchnorrRegister(
-        kp.pk,
-        Slice(ctxBad.data(), ctxBad.size()),
-        Slice(proof.data(), proof.size())));
+        kp.pk, Slice(ctxBad.data(), ctxBad.size()), Slice(proof.data(), proof.size())));
 
     // Truncation rejected
-    EXPECT_FALSE(verifySchnorrRegister(
-        kp.pk, Slice(ctx.data(), ctx.size()), Slice(proof.data(), 63)));
+    EXPECT_FALSE(
+        verifySchnorrRegister(kp.pk, Slice(ctx.data(), ctx.size()), Slice(proof.data(), 63)));
 }
 
 TEST(ConfidentialCrypto, SendSigmaRoundTrip)
@@ -276,8 +273,8 @@ TEST(ConfidentialCrypto, SendSigmaRoundTrip)
 
     SendSigmaProof proof{};
     ASSERT_TRUE(proveSendSigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
-    EXPECT_TRUE(verifySendSigma(
-        pub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
+    EXPECT_TRUE(
+        verifySendSigma(pub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 
     // Version replay / context change fails
     auto ctx2 = transactionContextIDSend(
@@ -287,8 +284,8 @@ TEST(ConfidentialCrypto, SendSigmaRoundTrip)
         10,
         Slice(acctR.data(), acctR.size()),
         4);
-    EXPECT_FALSE(verifySendSigma(
-        pub, Slice(ctx2.data(), ctx2.size()), Slice(proof.data(), proof.size())));
+    EXPECT_FALSE(
+        verifySendSigma(pub, Slice(ctx2.data(), ctx2.size()), Slice(proof.data(), proof.size())));
 }
 
 TEST(ConfidentialCrypto, ConvertBackAndClawbackSigma)
@@ -319,8 +316,7 @@ TEST(ConfidentialCrypto, ConvertBackAndClawbackSigma)
     wit.holderSk = holder.sk;
 
     ConvertBackSigmaProof proof{};
-    ASSERT_TRUE(
-        proveConvertBackSigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    ASSERT_TRUE(proveConvertBackSigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
     EXPECT_TRUE(verifyConvertBackSigma(
         pub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 
@@ -344,8 +340,7 @@ TEST(ConfidentialCrypto, ConvertBackAndClawbackSigma)
         Slice(holderAcct.data(), holderAcct.size()));
 
     ClawbackSigmaProof cproof{};
-    ASSERT_TRUE(proveClawbackSigma(
-        cpub, issuer.sk, Slice(cctx.data(), cctx.size()), cproof));
+    ASSERT_TRUE(proveClawbackSigma(cpub, issuer.sk, Slice(cctx.data(), cctx.size()), cproof));
     EXPECT_TRUE(verifyClawbackSigma(
         cpub, Slice(cctx.data(), cctx.size()), Slice(cproof.data(), cproof.size())));
 
@@ -370,10 +365,8 @@ TEST(ConfidentialCrypto, BulletproofGeneratorCacheConcurrentGrowth)
     std::array<std::uint8_t, kAggregatedBulletproofBytes> aggregateProof{};
     bool singleOk = false;
     bool aggregateOk = false;
-    std::thread single([&] {
-        singleOk =
-            proveBulletproofSingle(singleCommitment, 3, singleBlind, singleProof);
-    });
+    std::thread single(
+        [&] { singleOk = proveBulletproofSingle(singleCommitment, 3, singleBlind, singleProof); });
     std::thread aggregate([&] {
         aggregateOk = proveBulletproofAggregated(
             aggregateCommitment0,
@@ -434,8 +427,7 @@ TEST(ConfidentialCrypto, BulletproofSingleAndAggregated)
     ASSERT_TRUE(pedersenCommit(3, rAfter, pcAfter));
     std::array<std::uint8_t, kSingleBulletproofBytes> pAfter{};
     ASSERT_TRUE(proveBulletproofSingle(pcAfter, 3, rAfter, pAfter));
-    EXPECT_TRUE(
-        verifyBulletproofSingle(pcAfter, Slice(pAfter.data(), pAfter.size())));
+    EXPECT_TRUE(verifyBulletproofSingle(pcAfter, Slice(pAfter.data(), pAfter.size())));
 }
 
 TEST(ConfidentialCrypto, ScalarPointAndSerializeHelpers)
@@ -490,10 +482,10 @@ TEST(ConfidentialCrypto, ScalarPointAndSerializeHelpers)
     ASSERT_TRUE(pointAddMulBase(kp.pk, zero, same));
     EXPECT_EQ(same, kp.pk);
     Scalar orderTw{};
-    unsigned char const kOrderTw[32] = {
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48,
-        0xA0, 0x3B, 0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
+    unsigned char const kOrderTw[32] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE,
+                                        0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48, 0xA0, 0x3B,
+                                        0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
     std::memcpy(orderTw.data(), kOrderTw, 32);
     EXPECT_FALSE(pointAddMulBase(kp.pk, orderTw, tweaked));
 
@@ -548,10 +540,10 @@ TEST(ConfidentialCrypto, PedersenCommitScalarEdgeCases)
 
     // Amount equal to the group order is not a valid seckey
     Scalar orderAmt{};
-    unsigned char const kOrder[32] = {
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48,
-        0xA0, 0x3B, 0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
+    unsigned char const kOrder[32] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE,
+                                      0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48, 0xA0, 0x3B,
+                                      0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41};
     std::memcpy(orderAmt.data(), kOrder, 32);
     EXPECT_FALSE(pedersenCommitScalar(orderAmt, r, pc));
 
@@ -563,21 +555,17 @@ TEST(ConfidentialCrypto, SigmaProofFailurePaths)
     auto kp = makeKey();
     auto a = acct(1);
     auto id = issuance(2);
-    auto ctx = transactionContextIDConvert(
-        85, Slice(a.data(), a.size()), Slice(id.data(), id.size()), 1);
+    auto ctx =
+        transactionContextIDConvert(85, Slice(a.data(), a.size()), Slice(id.data(), id.size()), 1);
 
     SchnorrRegisterProof proof{};
     Scalar badSk{};
-    EXPECT_FALSE(proveSchnorrRegister(
-        badSk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_FALSE(proveSchnorrRegister(badSk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
     auto other = makeKey();
-    EXPECT_FALSE(proveSchnorrRegister(
-        other.sk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_FALSE(proveSchnorrRegister(other.sk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
 
-    ASSERT_TRUE(proveSchnorrRegister(
-        kp.sk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
-    EXPECT_TRUE(extractSigmaChallenge(
-        Slice(proof.data(), proof.size()), badSk));
+    ASSERT_TRUE(proveSchnorrRegister(kp.sk, kp.pk, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_TRUE(extractSigmaChallenge(Slice(proof.data(), proof.size()), badSk));
 
     // Corrupt challenge / response
     auto badProof = proof;
@@ -601,8 +589,7 @@ TEST(ConfidentialCrypto, SigmaProofFailurePaths)
     wit.balanceBlind = mustRandomScalar();
     wit.senderSk = kp.sk;
     SendSigmaProof sendProof{};
-    EXPECT_FALSE(proveSendSigma(
-        emptyPub, wit, Slice(ctx.data(), ctx.size()), sendProof));
+    EXPECT_FALSE(proveSendSigma(emptyPub, wit, Slice(ctx.data(), ctx.size()), sendProof));
     EXPECT_FALSE(verifySendSigma(
         emptyPub, Slice(ctx.data(), ctx.size()), Slice(sendProof.data(), sendProof.size())));
 
@@ -636,17 +623,14 @@ TEST(ConfidentialCrypto, SigmaProofFailurePaths)
     wit.balance = amountToScalar(b);
     wit.balanceBlind = rho;
     ASSERT_TRUE(proveSendSigma(pub, wit, Slice(ctx.data(), ctx.size()), sendProof));
-    EXPECT_FALSE(verifySendSigma(
-        pub, Slice(ctx.data(), ctx.size()), Slice(sendProof.data(), 100)));
+    EXPECT_FALSE(verifySendSigma(pub, Slice(ctx.data(), ctx.size()), Slice(sendProof.data(), 100)));
 
     auto corrupted = sendProof;
     std::memset(corrupted.data() + 32, 0, 32);  // zm = 0 field element OK
     // zero zr (blinding response) rejected by parseScalar
     std::memset(corrupted.data() + 64, 0, 32);
     EXPECT_FALSE(verifySendSigma(
-        pub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(corrupted.data(), corrupted.size())));
+        pub, Slice(ctx.data(), ctx.size()), Slice(corrupted.data(), corrupted.size())));
 
     // Size mismatch between keys and c2
     pub.c2.pop_back();
@@ -669,13 +653,11 @@ TEST(ConfidentialCrypto, SigmaProofFailurePaths)
     cwit.balanceBlind = {};
     cwit.holderSk = kp.sk;
     ConvertBackSigmaProof cproof{};
-    EXPECT_FALSE(proveConvertBackSigma(
-        cpub, cwit, Slice(ctx.data(), ctx.size()), cproof));
+    EXPECT_FALSE(proveConvertBackSigma(cpub, cwit, Slice(ctx.data(), ctx.size()), cproof));
     cwit.balanceBlind = rho;
-    ASSERT_TRUE(proveConvertBackSigma(
-        cpub, cwit, Slice(ctx.data(), ctx.size()), cproof));
-    EXPECT_FALSE(verifyConvertBackSigma(
-        cpub, Slice(ctx.data(), ctx.size()), Slice(cproof.data(), 32)));
+    ASSERT_TRUE(proveConvertBackSigma(cpub, cwit, Slice(ctx.data(), ctx.size()), cproof));
+    EXPECT_FALSE(
+        verifyConvertBackSigma(cpub, Slice(ctx.data(), ctx.size()), Slice(cproof.data(), 32)));
     auto cBad = cproof;
     std::memset(cBad.data(), 0, 32);
     EXPECT_FALSE(verifyConvertBackSigma(
@@ -690,30 +672,24 @@ TEST(ConfidentialCrypto, SigmaProofFailurePaths)
     ASSERT_TRUE(elgamalEncrypt(kp.pk, 0, r, claw.issuerBalance));
     claw.revealedAmount = 0;
     ClawbackSigmaProof clawProof{};
-    EXPECT_FALSE(proveClawbackSigma(
-        claw, kp.sk, Slice(ctx.data(), ctx.size()), clawProof));
+    EXPECT_FALSE(proveClawbackSigma(claw, kp.sk, Slice(ctx.data(), ctx.size()), clawProof));
     EXPECT_FALSE(verifyClawbackSigma(
         claw, Slice(ctx.data(), ctx.size()), Slice(clawProof.data(), clawProof.size())));
 
     ASSERT_TRUE(elgamalEncrypt(kp.pk, 11, r, claw.issuerBalance));
     claw.revealedAmount = 11;
-    EXPECT_FALSE(proveClawbackSigma(
-        claw, other.sk, Slice(ctx.data(), ctx.size()), clawProof));
-    EXPECT_FALSE(proveClawbackSigma(
-        claw, Scalar{}, Slice(ctx.data(), ctx.size()), clawProof));
-    ASSERT_TRUE(proveClawbackSigma(
-        claw, kp.sk, Slice(ctx.data(), ctx.size()), clawProof));
-    EXPECT_FALSE(verifyClawbackSigma(
-        claw, Slice(ctx.data(), ctx.size()), Slice(clawProof.data(), 16)));
+    EXPECT_FALSE(proveClawbackSigma(claw, other.sk, Slice(ctx.data(), ctx.size()), clawProof));
+    EXPECT_FALSE(proveClawbackSigma(claw, Scalar{}, Slice(ctx.data(), ctx.size()), clawProof));
+    ASSERT_TRUE(proveClawbackSigma(claw, kp.sk, Slice(ctx.data(), ctx.size()), clawProof));
+    EXPECT_FALSE(
+        verifyClawbackSigma(claw, Slice(ctx.data(), ctx.size()), Slice(clawProof.data(), 16)));
 
     // Amount-zero verify path (size-valid proof, rejected before transcript)
     {
         ClawbackSigmaPublicInput clawZero = claw;
         clawZero.revealedAmount = 0;
         EXPECT_FALSE(verifyClawbackSigma(
-            clawZero,
-            Slice(ctx.data(), ctx.size()),
-            Slice(clawProof.data(), clawProof.size())));
+            clawZero, Slice(ctx.data(), ctx.size()), Slice(clawProof.data(), clawProof.size())));
     }
 
     claw.issuerBalance.c1 = {};
@@ -747,21 +723,15 @@ TEST(ConfidentialCrypto, SigmaProofFailurePaths)
     SendSigmaPublicInput badPub = pub;
     badPub.senderKey = {};
     EXPECT_FALSE(verifySendSigma(
-        badPub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(sendProof.data(), sendProof.size())));
+        badPub, Slice(ctx.data(), ctx.size()), Slice(sendProof.data(), sendProof.size())));
     badPub = pub;
     badPub.balanceC1 = {};
     EXPECT_FALSE(verifySendSigma(
-        badPub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(sendProof.data(), sendProof.size())));
+        badPub, Slice(ctx.data(), ctx.size()), Slice(sendProof.data(), sendProof.size())));
     badPub = pub;
     badPub.recipientKeys[0] = {};
     EXPECT_FALSE(verifySendSigma(
-        badPub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(sendProof.data(), sendProof.size())));
+        badPub, Slice(ctx.data(), ctx.size()), Slice(sendProof.data(), sendProof.size())));
 
     cpub.holderKey = kp.pk;
     cpub.balanceC1 = bal.c1;
@@ -779,15 +749,11 @@ TEST(ConfidentialCrypto, SigmaProofFailurePaths)
     ClawbackSigmaPublicInput clawBad = claw;
     clawBad.issuerKey = {};
     EXPECT_FALSE(verifyClawbackSigma(
-        clawBad,
-        Slice(ctx.data(), ctx.size()),
-        Slice(clawProof.data(), clawProof.size())));
+        clawBad, Slice(ctx.data(), ctx.size()), Slice(clawProof.data(), clawProof.size())));
     clawBad = claw;
     clawBad.issuerBalance.c2 = {};
     EXPECT_FALSE(verifyClawbackSigma(
-        clawBad,
-        Slice(ctx.data(), ctx.size()),
-        Slice(clawProof.data(), clawProof.size())));
+        clawBad, Slice(ctx.data(), ctx.size()), Slice(clawProof.data(), clawProof.size())));
 }
 
 TEST(ConfidentialCrypto, BulletproofVerifyRejectsMalformed)
@@ -815,8 +781,7 @@ TEST(ConfidentialCrypto, BulletproofVerifyRejectsMalformed)
 
     // Flip a bit in tau_x region — proof parses but equation fails
     bad = proof;
-    std::size_t const scalarOff =
-        4 * kCompressedPointBytes + 2 * 6 * kCompressedPointBytes;
+    std::size_t const scalarOff = 4 * kCompressedPointBytes + 2 * 6 * kCompressedPointBytes;
     bad[scalarOff] ^= 0x01;
     EXPECT_FALSE(verifyBulletproofSingle(pc, Slice(bad.data(), bad.size())));
 
@@ -844,19 +809,15 @@ TEST(ConfidentialCrypto, BulletproofVerifyRejectsMalformed)
     ASSERT_TRUE(pedersenCommit(2, r1, c1));
     std::array<std::uint8_t, kAggregatedBulletproofBytes> agg{};
     ASSERT_TRUE(proveBulletproofAggregated(c0, c1, 1, 2, r0, r1, agg));
-    EXPECT_FALSE(verifyBulletproofAggregated(
-        c0, c1, Slice(agg.data(), agg.size() - 1)));
+    EXPECT_FALSE(verifyBulletproofAggregated(c0, c1, Slice(agg.data(), agg.size() - 1)));
     auto aggBad = agg;
     aggBad[0] = 0x04;
-    EXPECT_FALSE(verifyBulletproofAggregated(
-        c0, c1, Slice(aggBad.data(), aggBad.size())));
+    EXPECT_FALSE(verifyBulletproofAggregated(c0, c1, Slice(aggBad.data(), aggBad.size())));
     // Corrupt L point in aggregated proof
     aggBad = agg;
     aggBad[4 * kCompressedPointBytes] = 0x04;
-    EXPECT_FALSE(verifyBulletproofAggregated(
-        c0, c1, Slice(aggBad.data(), aggBad.size())));
-    EXPECT_FALSE(verifyBulletproofAggregated(
-        junkPk, c1, Slice(agg.data(), agg.size())));
+    EXPECT_FALSE(verifyBulletproofAggregated(c0, c1, Slice(aggBad.data(), aggBad.size())));
+    EXPECT_FALSE(verifyBulletproofAggregated(junkPk, c1, Slice(agg.data(), agg.size())));
 
     // Value at top of 64-bit range (Bünz n=64 bit decomposition)
     Scalar rMax = mustRandomScalar();
@@ -904,8 +865,7 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRoundTrip)
         3);
 
     AuditorEqualitySigmaProof proof{};
-    ASSERT_TRUE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    ASSERT_TRUE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
     EXPECT_EQ(proof.size(), kAuditorEqualitySigmaProofBytes);
     EXPECT_TRUE(verifyAuditorEqualitySigma(
         pub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
@@ -921,8 +881,7 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRoundTrip)
     wit.randomness = rAud0;
     wit.amount = amountToScalar(0);
     AuditorEqualitySigmaProof proof0{};
-    ASSERT_TRUE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof0));
+    ASSERT_TRUE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof0));
     EXPECT_TRUE(verifyAuditorEqualitySigma(
         pub, Slice(ctx.data(), ctx.size()), Slice(proof0.data(), proof0.size())));
 }
@@ -963,8 +922,7 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRejectsTamperAndWrongBinding)
         7);
 
     AuditorEqualitySigmaProof proof{};
-    ASSERT_TRUE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    ASSERT_TRUE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
     ASSERT_TRUE(verifyAuditorEqualitySigma(
         pub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 
@@ -974,9 +932,7 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRejectsTamperAndWrongBinding)
         auto bad = proof;
         bad[off] ^= 0x01;
         EXPECT_FALSE(verifyAuditorEqualitySigma(
-            pub,
-            Slice(ctx.data(), ctx.size()),
-            Slice(bad.data(), bad.size())));
+            pub, Slice(ctx.data(), ctx.size()), Slice(bad.data(), bad.size())));
     }
 
     // Zero challenge rejected ([1, n-1]).
@@ -986,8 +942,8 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRejectsTamperAndWrongBinding)
         pub, Slice(ctx.data(), ctx.size()), Slice(zeroE.data(), zeroE.size())));
 
     // Truncation rejected.
-    EXPECT_FALSE(verifyAuditorEqualitySigma(
-        pub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), 127)));
+    EXPECT_FALSE(
+        verifyAuditorEqualitySigma(pub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), 127)));
 
     // Wrong context (target auditor version) rejected.
     auto ctxBad = transactionContextIDMigrateAuditor(
@@ -999,9 +955,7 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRejectsTamperAndWrongBinding)
         8);
     EXPECT_NE(ctx, ctxBad);
     EXPECT_FALSE(verifyAuditorEqualitySigma(
-        pub,
-        Slice(ctxBad.data(), ctxBad.size()),
-        Slice(proof.data(), proof.size())));
+        pub, Slice(ctxBad.data(), ctxBad.size()), Slice(proof.data(), proof.size())));
 
     // Wrong holder in context rejected.
     auto holder2 = acct(0x99);
@@ -1013,27 +967,21 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRejectsTamperAndWrongBinding)
         Slice(holder2.data(), holder2.size()),
         7);
     EXPECT_FALSE(verifyAuditorEqualitySigma(
-        pub,
-        Slice(ctxHolder.data(), ctxHolder.size()),
-        Slice(proof.data(), proof.size())));
+        pub, Slice(ctxHolder.data(), ctxHolder.size()), Slice(proof.data(), proof.size())));
 
     // Wrong pending auditor key rejected.
     auto otherAud = makeKey();
     auto badKeyPub = pub;
     badKeyPub.auditorKey = otherAud.pk;
     EXPECT_FALSE(verifyAuditorEqualitySigma(
-        badKeyPub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(proof.data(), proof.size())));
+        badKeyPub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 
     // Wrong issuer key rejected.
     auto otherIss = makeKey();
     auto badIssPub = pub;
     badIssPub.issuerKey = otherIss.pk;
     EXPECT_FALSE(verifyAuditorEqualitySigma(
-        badIssPub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(proof.data(), proof.size())));
+        badIssPub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 
     // Wrong auditor ciphertext (different randomness / amount) rejected.
     Ciphertext wrongAud{};
@@ -1041,18 +989,14 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaRejectsTamperAndWrongBinding)
     auto badCtPub = pub;
     badCtPub.auditorCiphertext = wrongAud;
     EXPECT_FALSE(verifyAuditorEqualitySigma(
-        badCtPub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(proof.data(), proof.size())));
+        badCtPub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 
     Ciphertext wrongIss{};
     ASSERT_TRUE(elgamalEncrypt(issuer.pk, m + 1, rIss, wrongIss));
     badCtPub = pub;
     badCtPub.issuerCiphertext = wrongIss;
     EXPECT_FALSE(verifyAuditorEqualitySigma(
-        badCtPub,
-        Slice(ctx.data(), ctx.size()),
-        Slice(proof.data(), proof.size())));
+        badCtPub, Slice(ctx.data(), ctx.size()), Slice(proof.data(), proof.size())));
 }
 
 TEST(ConfidentialCrypto, AuditorEqualitySigmaProveRejectsBadWitness)
@@ -1093,28 +1037,23 @@ TEST(ConfidentialCrypto, AuditorEqualitySigmaProveRejectsBadWitness)
     AuditorEqualitySigmaProof proof{};
     // Wrong issuer secret
     wit.issuerSk = mustRandomScalar();
-    EXPECT_FALSE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_FALSE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
     wit.issuerSk = issuer.sk;
 
     // Wrong randomness
     wit.randomness = mustRandomScalar();
-    EXPECT_FALSE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_FALSE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
     wit.randomness = rAud;
 
     // Wrong amount
     wit.amount = amountToScalar(m + 1);
-    EXPECT_FALSE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_FALSE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
     wit.amount = amountToScalar(m);
 
     // Zero / invalid secrets
     wit.issuerSk = {};
-    EXPECT_FALSE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_FALSE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
     wit.issuerSk = issuer.sk;
     wit.randomness = {};
-    EXPECT_FALSE(proveAuditorEqualitySigma(
-        pub, wit, Slice(ctx.data(), ctx.size()), proof));
+    EXPECT_FALSE(proveAuditorEqualitySigma(pub, wit, Slice(ctx.data(), ctx.size()), proof));
 }

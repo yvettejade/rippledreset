@@ -28,9 +28,7 @@ preflightPoint33(Slice blob);
 parseCiphertextField(Slice blob, confidential::Ciphertext& out);
 
 [[nodiscard]] bool
-sameC1(
-    confidential::Ciphertext const& a,
-    confidential::Ciphertext const& b) noexcept;
+sameC1(confidential::Ciphertext const& a, confidential::Ciphertext const& b) noexcept;
 
 [[nodiscard]] TER
 encZeroFor(

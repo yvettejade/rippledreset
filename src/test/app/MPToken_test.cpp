@@ -7757,8 +7757,7 @@ class MPToken_test : public beast::unit_test::Suite
 
         auto const keyBytes = [](Account const& account) {
             auto const slice = account.pk().slice();
-            return std::string(
-                reinterpret_cast<char const*>(slice.data()), slice.size());
+            return std::string(reinterpret_cast<char const*>(slice.data()), slice.size());
         };
         std::string const issuerKey = keyBytes(alice);
         std::string const auditorKey = keyBytes(auditor);
@@ -7804,9 +7803,7 @@ class MPToken_test : public beast::unit_test::Suite
                  .mutableFlags = tmfMPTCanMutateTransferFee});
 
             mptAlice.set(
-                {.account = alice,
-                 .auditorEncryptionKey = auditorKey,
-                 .err = tecNO_PERMISSION});
+                {.account = alice, .auditorEncryptionKey = auditorKey, .err = tecNO_PERMISSION});
             mptAlice.set(
                 {.account = alice,
                  .mutableFlags = tmfMPTSetCanHoldConfidentialBalance,
@@ -7823,8 +7820,7 @@ class MPToken_test : public beast::unit_test::Suite
                  .mutableFlags = tmfMPTSetCanHoldConfidentialBalance,
                  .issuerEncryptionKey = issuerKey,
                  .auditorEncryptionKey = auditorKey});
-            BEAST_EXPECT(mptAlice.checkFlags(
-                lsfMPTCanTransfer | lsfMPTCanHoldConfidentialBalance));
+            BEAST_EXPECT(mptAlice.checkFlags(lsfMPTCanTransfer | lsfMPTCanHoldConfidentialBalance));
 
             auto const sle = env.le(keylet::mptIssuance(mptAlice.issuanceID()));
             BEAST_EXPECT(sle);
@@ -7915,8 +7911,7 @@ class MPToken_test : public beast::unit_test::Suite
             Env env{*this, features};
             MPTTester mptAlice(env, alice);
             mptAlice.create(
-                {.ownerCount = 1,
-                 .flags = tfMPTCanHoldConfidentialBalance | tfMPTCanTransfer});
+                {.ownerCount = 1, .flags = tfMPTCanHoldConfidentialBalance | tfMPTCanTransfer});
             env.app().getOpenLedger().modify([&](OpenView& view, beast::Journal) {
                 auto sle = view.read(keylet::mptIssuance(mptAlice.issuanceID()));
                 if (!sle)
