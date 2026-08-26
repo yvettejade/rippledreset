@@ -703,12 +703,14 @@ ValidConfidentialMPT::visitEntry(
 bool
 ValidConfidentialMPT::finalize(
     STTx const&,
-    TER const result,
+    TER const,
     XRPAmount const,
     ReadView const& view,
     beast::Journal const& j) const
 {
-    if (!view.rules().enabled(featureConfidentialTransfer) || !isTesSuccess(result))
+    // tesSUCCESS and tec* both reach checkInvariants. A claimed-failure apply
+    // must not leave impossible confidential MPT field sets or auditor mirrors.
+    if (!view.rules().enabled(featureConfidentialTransfer))
         return true;
 
     if (invalid_)

@@ -21,6 +21,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFlags.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/jss.h>
@@ -1498,32 +1499,39 @@ class ConfidentialMPT_test : public beast::unit_test::Suite
         Account const a2{"invA2"};
 
         auto runInvariant = [&](std::string const& expectLog, auto const& precheck) {
-            Env env(*this, features);
-            env.fund(XRP(1000), a1, a2);
-            env.close();
-            OpenView ov{*env.current()};
-            test::StreamSink sink{beast::Severity::Warning};
-            beast::Journal const jlog{sink};
-            STTx tx{ttACCOUNT_SET, [](STObject&) {}};
-            ApplyContext ac{
-                env.app(), ov, tx, tesSUCCESS, env.current()->fees().base, TapNone, jlog};
-            CurrentTransactionRulesGuard const rulesGuard(ov.rules());
-            BEAST_EXPECT(precheck(a1, a2, ac));
-            ValidConfidentialMPT confidential;
-            ValidMPTPayment payment;
-            ac.visit([&](uint256 const&,
-                         bool isDelete,
-                         std::shared_ptr<SLE const> const& before,
-                         std::shared_ptr<SLE const> const& after) {
-                confidential.visitEntry(isDelete, before, after);
-                payment.visitEntry(isDelete, before, after);
-            });
-            bool const passes = expectLog == "invalid OutstandingAmount balance"
-                ? payment.finalize(tx, tesSUCCESS, XRPAmount{}, ac.view(), jlog)
-                : confidential.finalize(tx, tesSUCCESS, XRPAmount{}, ac.view(), jlog);
-            BEAST_EXPECT(!passes);
-            BEAST_EXPECTS(
-                sink.messages().str().find(expectLog) != std::string::npos, sink.messages().str());
+            auto checkResult = [&](TER const result) {
+                Env env(*this, features);
+                env.fund(XRP(1000), a1, a2);
+                env.close();
+                OpenView ov{*env.current()};
+                test::StreamSink sink{beast::Severity::Warning};
+                beast::Journal const jlog{sink};
+                STTx tx{ttACCOUNT_SET, [](STObject&) {}};
+                ApplyContext ac{
+                    env.app(), ov, tx, tesSUCCESS, env.current()->fees().base, TapNone, jlog};
+                CurrentTransactionRulesGuard const rulesGuard(ov.rules());
+                BEAST_EXPECT(precheck(a1, a2, ac));
+                ValidConfidentialMPT confidential;
+                ValidMPTPayment payment;
+                ac.visit([&](uint256 const&,
+                             bool isDelete,
+                             std::shared_ptr<SLE const> const& before,
+                             std::shared_ptr<SLE const> const& after) {
+                    confidential.visitEntry(isDelete, before, after);
+                    payment.visitEntry(isDelete, before, after);
+                });
+                bool const passes = expectLog == "invalid OutstandingAmount balance"
+                    ? payment.finalize(tx, result, XRPAmount{}, ac.view(), jlog)
+                    : confidential.finalize(tx, result, XRPAmount{}, ac.view(), jlog);
+                BEAST_EXPECT(!passes);
+                BEAST_EXPECTS(
+                    sink.messages().str().find(expectLog) != std::string::npos,
+                    sink.messages().str());
+            };
+            checkResult(tesSUCCESS);
+            // ValidConfidentialMPT must still reject impossible state on tec*.
+            if (expectLog != "invalid OutstandingAmount balance")
+                checkResult(tecNO_PERMISSION);
         };
 
         runInvariant(
@@ -1653,6 +1661,7 @@ class ConfidentialMPT_test : public beast::unit_test::Suite
             checker.visitEntry(false, before, after);
             STTx tx{ttACCOUNT_SET, [](STObject&) {}};
             BEAST_EXPECT(!checker.finalize(tx, tesSUCCESS, XRPAmount{}, view, jlog));
+            BEAST_EXPECT(!checker.finalize(tx, tecNO_PERMISSION, XRPAmount{}, view, jlog));
             BEAST_EXPECT(
                 sink.messages().str().find("invalid confidential MPT state") != std::string::npos);
         }
