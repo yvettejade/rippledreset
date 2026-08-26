@@ -72,6 +72,23 @@ words:
   - citardauq
   - clawback
   - clawbacks
+  - ElGamal
+  - Gplus
+  - Pedersen
+  - Rerandomize
+  - Schnorr
+  - pedersen
+  - rerand
+  - ConfidentialMPTClawback
+  - ConfidentialMPTSend
+  - ConfidentialMPTMergeInbox
+  - ConfidentialMPTConvertBack
+  - ConfidentialMPTConvert
+  - ConfidentialTransfer
+  - ConfidentialOutstandingAmount
+  - ConfidentialBalanceVersion
+  - ConfidentialBalanceSpending
+  - ConfidentialBalanceInbox
   - cmaketoolchain
   - coeffs
   - coldwallet
@@ -179,6 +196,7 @@ words:
   - mptokenissuance
   - mptokens
   - mpts
+  - "MPT's"
   - mtgox
   - multisig
   - multisign

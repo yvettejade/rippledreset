@@ -1672,6 +1672,79 @@ class Delegate_test : public beast::unit_test::Suite
             env.close();
             mpt.set({.account = alice, .flags = tfMPTLock | tfFullyCanonicalSig, .delegate = bob});
         }
+
+        // lock/unlock granular permission cannot mutate issuance or register
+        // confidential keys
+        {
+            Env env(*this);
+            Account const alice{"alice"};
+            Account const bob{"bob"};
+            Account const auditor{"auditor"};
+            env.fund(XRP(100000), alice, bob, auditor);
+            env.close();
+
+            MPTTester mpt(env, alice, {.fund = false});
+            env.close();
+            mpt.create(
+                {.flags = tfMPTCanLock | tfMPTCanHoldConfidentialBalance,
+                 .mutableFlags = tmfMPTCanMutateMetadata});
+            env.close();
+
+            env(delegate::set(alice, bob, {"MPTokenIssuanceLock", "MPTokenIssuanceUnlock"}));
+            env.close();
+
+            // Dummy 0x02/0x03 bytes are not valid compressed secp256k1
+            // points; preflight rejects them with temMALFORMED before
+            // delegate permission is checked. Use real Account public keys.
+            auto const keyBytes = [](Account const& account) {
+                auto const slice = account.pk().slice();
+                return std::string(reinterpret_cast<char const*>(slice.data()), slice.size());
+            };
+            std::string const issuerKey = keyBytes(alice);
+            std::string const auditorKey = keyBytes(auditor);
+            mpt.set(
+                {.account = alice,
+                 .issuerEncryptionKey = issuerKey,
+                 .delegate = bob,
+                 .err = terNO_DELEGATE_PERMISSION});
+            mpt.set(
+                {.account = alice,
+                 .auditorEncryptionKey = auditorKey,
+                 .delegate = bob,
+                 .err = terNO_DELEGATE_PERMISSION});
+            mpt.set(
+                {.account = alice,
+                 .issuerEncryptionKey = issuerKey,
+                 .auditorEncryptionKey = auditorKey,
+                 .delegate = bob,
+                 .err = terNO_DELEGATE_PERMISSION});
+            mpt.set(
+                {.account = alice,
+                 .metadata = "test",
+                 .delegate = bob,
+                 .err = terNO_DELEGATE_PERMISSION});
+            {
+                auto const sle = env.le(keylet::mptIssuance(mpt.issuanceID()));
+                BEAST_EXPECT(sle);
+                BEAST_EXPECT(!sle->isFieldPresent(sfIssuerEncryptionKey));
+                BEAST_EXPECT(!sle->isFieldPresent(sfAuditorEncryptionKey));
+                BEAST_EXPECT(!sle->isFieldPresent(sfPendingAuditorEncryptionKey));
+            }
+
+            mpt.set({.account = alice, .flags = tfMPTLock, .delegate = bob});
+            mpt.set({.account = alice, .flags = tfMPTUnlock, .delegate = bob});
+
+            env(delegate::set(alice, bob, {"MPTokenIssuanceSet"}));
+            env.close();
+            mpt.set({.account = alice, .issuerEncryptionKey = issuerKey, .delegate = bob});
+            mpt.set({.account = alice, .auditorEncryptionKey = auditorKey, .delegate = bob});
+            {
+                auto const sle = env.le(keylet::mptIssuance(mpt.issuanceID()));
+                BEAST_EXPECT(sle);
+                BEAST_EXPECT(sle->isFieldPresent(sfIssuerEncryptionKey));
+                BEAST_EXPECT(sle->isFieldPresent(sfAuditorEncryptionKey));
+            }
+        }
     }
 
     void
@@ -2182,7 +2255,7 @@ class Delegate_test : public beast::unit_test::Suite
         // DO NOT modify expectedDelegableCount unless all scenarios, including
         // edge cases, have been fully tested and verified.
         // ====================================================================
-        std::size_t const expectedDelegableCount = 51;
+        std::size_t const expectedDelegableCount = 57;
 
         BEAST_EXPECTS(
             delegableCount == expectedDelegableCount,
