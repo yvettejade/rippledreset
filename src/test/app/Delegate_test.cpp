@@ -1679,7 +1679,8 @@ class Delegate_test : public beast::unit_test::Suite
             Env env(*this);
             Account const alice{"alice"};
             Account const bob{"bob"};
-            env.fund(XRP(100000), alice, bob);
+            Account const auditor{"auditor"};
+            env.fund(XRP(100000), alice, bob, auditor);
             env.close();
 
             MPTTester mpt(env, alice, {.fund = false});
@@ -1692,8 +1693,15 @@ class Delegate_test : public beast::unit_test::Suite
             env(delegate::set(alice, bob, {"MPTokenIssuanceLock", "MPTokenIssuanceUnlock"}));
             env.close();
 
-            std::string const issuerKey(33, '\x02');
-            std::string const auditorKey(33, '\x03');
+            // Dummy 0x02/0x03 bytes are not valid compressed secp256k1
+            // points; preflight rejects them with temMALFORMED before
+            // delegate permission is checked. Use real Account public keys.
+            auto const keyBytes = [](Account const& account) {
+                auto const slice = account.pk().slice();
+                return std::string(reinterpret_cast<char const*>(slice.data()), slice.size());
+            };
+            std::string const issuerKey = keyBytes(alice);
+            std::string const auditorKey = keyBytes(auditor);
             mpt.set(
                 {.account = alice,
                  .issuerEncryptionKey = issuerKey,
